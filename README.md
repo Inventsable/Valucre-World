@@ -1,29 +1,5 @@
-# valucre-world
+# [valucre-world](https://valucre-world.firebaseapp.com/)
 
-## Project setup
-```
-npm install
-```
+[Latest map prototype](https://valucre-world.firebaseapp.com/) for text-based roleplaying forum [Valucre.com](https://www.valucre.com/) to test [goCart Illustrator extension](https://github.com/Inventsable/goCart) workflow:
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
-
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Run your tests
-```
-npm run test
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+![](https://thumbs.gfycat.com/TiredUnfinishedEuropeanfiresalamander-size_restricted.gif)
