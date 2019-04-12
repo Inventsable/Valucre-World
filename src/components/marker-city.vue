@@ -83,6 +83,8 @@ export default {
     methods: {
         getAnnoBoxStyle() {
             return `
+                
+
                 position: absolute;
                 bottom: 26px;
                 opacity: ${this.marker.active ? 1 : 0};
@@ -215,7 +217,7 @@ export default {
 <style>
 
 .annobox {
-    display: flex;
+    display: none;
     justify-content: center;
     z-index: 7;
 }

@@ -15,6 +15,7 @@
         </svg>
       </div>
     </div>
+    <dialogmarker ref="dialogmarker" />
   </v-app>
 </template>
 
@@ -23,6 +24,7 @@ import toolbar from './components/toolbar.vue'
 import drawer from './components/drawer.vue'
 import mainmap from './components/mainmap.vue'
 import loadingicon from './components/loadingicon.vue'
+import dialogmarker from './components/dialogmarker.vue'
 
 export default {
   name: 'App',
@@ -31,6 +33,7 @@ export default {
         loadingicon,
         drawer,
         mainmap,
+        dialogmarker,
     },
   data () {
     return {
@@ -48,12 +51,20 @@ export default {
   mounted() {
     window.addEventListener('scroll', this.checkScroll)
     this.dressStyle();
+    this.calcImages();
   },
   methods: {
+    calcImages() {
+      let result = 0;
+      for (let i = 0; i <= 6; i++)
+        result += Math.pow(4, i);
+      console.log(`Map is made of ${result} images`);
+    },
     doneLoading() {
       this.isLoaded = true;
       this.$refs.drawer.init();
       const self = this;
+      this.mainmap.doInitAction();
       setTimeout(() => {
 
       }, 200);

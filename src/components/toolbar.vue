@@ -1,7 +1,7 @@
 <template>
     <v-toolbar dense class="" style="z-index:400;"
         id="toolbar">
-        <v-divider style="" vertical></v-divider>
+        <!-- <v-divider style="" vertical></v-divider>
         <v-overflow-btn
             v-if="false"
             id="selector"
@@ -11,7 +11,11 @@
             hide-details
             overflow
         ></v-overflow-btn>
-        <v-spacer class=""></v-spacer>
+        <v-spacer class=""></v-spacer> -->
+        <v-toolbar-title class="pl-4">
+            {{anno}}
+        </v-toolbar-title>
+        <v-spacer></v-spacer>
         <v-divider
             class="mr-2"
             vertical
@@ -105,6 +109,32 @@ export default {
             } else {
                 return 'more_vert';
             }
+        },
+        anno() {
+            if (this.app.isLoaded) {
+                if (this.app.mainmap.hasMap) {
+                    let check = /world/i.test(this.app.mainmap.activeBoard)
+
+                    if (this.$vuetify.breakpoint.name !== 'xs')
+                        return `z${this.zoom}, ${!check ? this.app.mainmap.activeBoard : 'World'}`
+                    else
+                        return `z${this.zoom}`;
+
+                }
+            } else {
+                return '';
+            }
+        },
+        zoom() {
+            if (this.app.isLoaded) {
+                if (this.app.mainmap.hasMap) {
+                    return this.app.mainmap.zoom;
+                // } else {
+                //     return 'more_vert';
+                }
+            } else {
+                return 0;
+            }
         }
     },
     methods: {
@@ -123,7 +153,8 @@ export default {
         },
         openDrawer() {
             // this.$parent.$refs.drawer.state = !this.$parent.$refs.drawer.state;
-            this.app.$refs.drawer.state = !this.app.$refs.drawer.state;
+            if (this.app.isLoaded)
+                this.app.$refs.drawer.state = !this.app.$refs.drawer.state;
         },
         changeStrict() {
             // console.log(this.toggle_exclusive);
