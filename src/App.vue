@@ -40,6 +40,50 @@ export default {
       isLoaded: false,
       mainmap: null,
       isPrepped: false,
+      boards: [
+        {
+          name: 'Terrenus',
+          desc: 'Birthplace of magitech',
+          tags: ['test', 'test'],
+          landingPage: 'https://www.valucre.com/lore.html/terrenus/terrenus-landing-page/',
+          ama: 'https://www.valucre.com/topic/39612-terrenus-ama-20/',
+        },
+        {
+          name: 'Genesaris',
+          desc: 'Birthplace of airships',
+          tags: ['test', 'test'],
+          landingPage: 'https://www.valucre.com/lore.html/genesaris/genesaris-landing-page/',
+          ama: 'https://www.valucre.com/topic/41870-genesaris-ama/',
+        },
+        {
+          name: 'Renovatio',
+          desc: 'Divine skylands',
+          tags: ['test', 'test'],
+          landingPage: 'https://www.valucre.com/lore.html/tellusmater/renovatio/renovatio-r689/',
+          ama: 'https://www.valucre.com/topic/40375-renovatio-ama/',
+        },
+        {
+          name: 'Alterion',
+          desc: 'Birthplace of combat alchemy',
+          tags: ['test', 'test'],
+          landingPage: 'https://www.valucre.com/lore.html/tellusmater/alterion/the-realm-of-the-crystal-r440/',
+          ama: 'https://www.valucre.com/topic/24496-alterion-ama/',
+        },
+        {
+          name: 'Orisia',
+          desc: 'Tropical island nation',
+          tags: ['test', 'test'],
+          landingPage: 'https://www.valucre.com/lore.html/genesaris/orisia/orisia-landing-page/',
+          ama: 'https://www.valucre.com/topic/38311-orisia-ask-me-anything/',
+        },
+        {
+          name: 'World',
+          desc: 'The whole of Valucre',
+          tags: ['test', 'test'],
+          landingPage: 'https://www.valucre.com/lore.html/world/valucre-overview/',
+          ama: 'https://www.valucre.com/topic/24379-valucre-ama-series/',
+        },
+      ]
     }
   },
   created() {
@@ -54,6 +98,11 @@ export default {
     this.calcImages();
   },
   methods: {
+    findBoardByName(str) {
+      return this.boards.find(board => {
+        return board.name == str;
+      })
+    },
     calcImages() {
       let result = 0;
       for (let i = 0; i <= 6; i++)

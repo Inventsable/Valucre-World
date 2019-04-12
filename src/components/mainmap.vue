@@ -226,31 +226,34 @@ export default {
         },
     },
     created() {
-        db.collection('Terrenus').get()
-        .then(snapshot => {
-            console.log(snapshot);
-            snapshot.docs.forEach(doc => {
-                let marker = doc.data();
-                this.markers.push({
-                    board: marker.board,
-                    dbref: marker.dbref,
-                    desc: marker.desc,
-                    lat: marker.lat,
-                    lng: marker.lng,
-                    latlng: new google.maps.LatLng({
+        let boards = ['Terrenus', 'Orisia', 'Genesaris', 'Renovatio', 'Alterion']
+        boards.forEach(board => {
+            db.collection(board).get()
+            .then(snapshot => {
+                console.log(snapshot);
+                snapshot.docs.forEach(doc => {
+                    let marker = doc.data();
+                    this.markers.push({
+                        board: marker.board,
+                        dbref: marker.dbref,
+                        desc: marker.desc,
                         lat: marker.lat,
                         lng: marker.lng,
-                    }),
-                    link: marker.link,
-                    tags: marker.tags,
-                    title: marker.title,
-                    tooltip: marker.tooltip,
-                    type: marker.type,
-                    hover: false,
-                    active: false,
+                        latlng: new google.maps.LatLng({
+                            lat: marker.lat,
+                            lng: marker.lng,
+                        }),
+                        link: marker.link,
+                        tags: marker.tags,
+                        title: marker.title,
+                        tooltip: marker.tooltip,
+                        type: marker.type,
+                        hover: false,
+                        active: false,
+                    })
                 })
+                // console.log(this.markers)
             })
-            console.log(this.markers)
         })
     },
     mounted() {
@@ -276,12 +279,12 @@ export default {
             })
         },
         findBoardInCurrentView() {
-            console.log(`lat: ${this.simplePos.lat}, lng: ${this.simplePos.lng}`);
+            // console.log(`lat: ${this.simplePos.lat}, lng: ${this.simplePos.lng}`);
             let count = -1, match = false;
             this.boards.forEach(name => {
                 count++;
                 if (this.bounds[name].area.contains(this.realLatLng)) {
-                    console.log(`${name} is in view`)
+                    // console.log(`${name} is in view`)
                     match = true;
                     this.activeBoard = name;
                 }

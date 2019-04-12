@@ -115,8 +115,13 @@ export default {
                 if (this.app.mainmap.hasMap) {
                     let check = /world/i.test(this.app.mainmap.activeBoard)
 
-                    if (this.$vuetify.breakpoint.name !== 'xs')
-                        return `z${this.zoom}, ${!check ? this.app.mainmap.activeBoard : 'World'}`
+                    if (this.$vuetify.breakpoint.name !== 'xs') {
+                        if (this.app.$refs.drawer.state) {
+                            return `z${this.zoom}`
+                        } else {
+                            return `z${this.zoom}, ${!check ? this.app.mainmap.activeBoard : 'World'}`
+                        }
+                    }
                     else
                         return `z${this.zoom}`;
 

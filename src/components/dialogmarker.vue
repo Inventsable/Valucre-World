@@ -2,14 +2,27 @@
     <!-- <div class="isolated"> -->
         <v-layout row justify-center>
             <v-dialog 
-                lazy
+                persistent
                 v-model="dialog" 
-                max-width="600px"
-                style="z-index:500;">
+                fullscreen hide-overlay transition="dialog-bottom-transition"
+                :style="checkFullScreenStyle()"
+                >
+                <!-- max-width="600px"
+                :style="checkFullScreenStyle()" -->
             <v-card>
-                <v-card-title class="pb-0">
-                <span class="headline">{{`New ${this.activeBoard} Marker`}}</span>
-                </v-card-title>
+                <v-toolbar dark color="primary" class="px-4">
+                    <v-btn icon dark @click="dialog = false">
+                        <v-icon>close</v-icon>
+                    </v-btn>
+                    <v-toolbar-title>{{`New ${this.activeBoard} Marker`}}</v-toolbar-title>
+                    <v-spacer></v-spacer>
+                    <v-toolbar-items>
+                        <v-btn dark flat @click="dialog = false">Save</v-btn>
+                    </v-toolbar-items>
+                </v-toolbar>
+                <!-- <v-card-title class="pb-0">
+                    <span class="headline">{{`New ${this.activeBoard} Marker`}}</span>
+                </v-card-title> -->
                 <v-card-text>
                     <v-container grid-list-md class="pt-0">
                         <v-layout wrap>
@@ -23,6 +36,7 @@
                             <v-flex xs12 sm6 md4>
                                 <v-text-field 
                                     v-model="link"
+                                    prepend-inner-icon="link"
                                     label="Link"
                                     hide-details
                                 ></v-text-field>
@@ -48,9 +62,8 @@
                             </v-flex>
                         </v-layout>
                     </v-container>
-                    <small>*indicates required field</small>
                 </v-card-text>
-                <v-card-actions>
+                <v-card-actions class="pr-4">
                     <v-spacer></v-spacer>
                     <v-btn color="blue darken-1" flat @click="close()">Close</v-btn>
                     <v-btn color="blue darken-1" flat @click="submit()">Save</v-btn>
@@ -62,6 +75,8 @@
 </template>
 
 <script>
+import db from '@/firebase/init'
+
 export default {
     name: 'dialogmarker',
     data: () => ({
@@ -90,6 +105,8 @@ export default {
     }),
     mounted() {
         console.log('Hello');
+        window.addEventListener('resize', this.checkBreakpoint);
+        this.checkBreakpoint();
     },
     computed: {
         app() {
@@ -107,10 +124,51 @@ export default {
         }
     },
     methods: {
+        addNewMarker(marker) {
+            console.log(marker)
+            // db.collection(marker.board).doc(marker.dbref).set({
+            //     board: marker.board,
+            //     dbref: marker.dbref,
+            //     desc: marker.desc,
+            //     lat: marker.lat,
+            //     lng: marker.lng,
+            //     link: marker.link,
+            //     tags: marker.tags,
+            //     tooltip: marker.tooltip,
+            //     title: marker.title,
+            //     type: marker.type,
+            // });
+        },
+        getDBRef(marker) {
+            marker['dbref'] = marker.title.split(' ').join('_').split('\'').join('-');
+            // 
+            return marker;
+        },
+        checkFullScreenStyle() {
+            return `
+                z-index:500;
+                height: calc(100% - 48px);
+                margin: 0px 0px 0px 0px;
+            `
+                // max-height: ${(/xs/.test(this.$vuetify.breakpoint.name)) ? (/sm/.test(this.$vuetify.breakpoint.name)) ? '100%' : '90%' : '90%'};            
+        },
+        checkBreakpoint() {
+            let cards = document.querySelector('.v-dialog__content');
+            // console.log(cards);
+            let dialogs = document.querySelector('.v-dialog');
+            let fullscreen = document.querySelector('.v-dialog:not(.v-dialog--fullscreen)')
+            cards.style.top = (/sm|xs/.test(this.$vuetify.breakpoint.name)) ? 0 : 48 + 'px';
+            dialogs.style.margin = (/sm|xs/.test(this.$vuetify.breakpoint.name)) ? '0px 0px 0px 0px' : '24px 24px 24px 24px';
+            let altscreen = document.querySelector('.v-dialog--fullscreen')
+            altscreen.style.margin = '0px 0px 0px 0px';
+            // fullscreen.style.maxHeight = (/xs/.test(this.$vuetify.breakpoint.name)) ? (/sm/.test(this.$vuetify.breakpoint.name)) ? '100%' : '90%' : '90%';
+        },
         init() {
             this.lat = this.map.simplePos.lat;
             this.lng = this.map.simplePos.lng;
             this.activeBoard = this.map.activeBoard;
+            this.board = this.map.activeBoard;
+            this.type = 'City';
         },
         close() {
             this.clear()
@@ -118,6 +176,23 @@ export default {
         },
         submit() {
             console.log('Submitting marker');
+            let marker = {
+                lat: this.lat,
+                lng: this.lng,
+                board: this.board,
+                title: this.title,
+                dbref: this.title.split(' ').join('_').split('\'').join('-'),
+                type: this.type,
+                link: this.link,
+                desc: this.desc,
+                tooltip: this.tooltip,
+            }
+            console.log(marker);
+            db.collection(this.board).doc(marker.dbref).set(marker)
+            .then(() => {
+                console.log('Done');
+            })
+            // this.addNewMarker();
             this.close();
         },
         clear() {
@@ -140,10 +215,7 @@ export default {
 </script>
 
 <style scoped>
-.v-dialog__content {
-    top: 48px;
-    height: calc(100% - 48px);
-}
+
 
 .isolated {
     border: 2px solid red;

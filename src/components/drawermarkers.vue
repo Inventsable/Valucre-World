@@ -1,19 +1,21 @@
 <template>
     <div>
-        <v-list-group v-for="type in markertypes" 
-        :key="type.name" 
-        :prepend-icon="type.icon" 
-        :value="type.value">
+        <v-list-group 
+            v-for="type in markertypes" 
+            v-show="type.show"
+            :key="type.name" 
+            :prepend-icon="type.icon" 
+            :value="type.value">
             <template v-slot:activator>
                 <v-list-tile>
-                <v-list-tile-title>{{type.title}}</v-list-tile-title>
+                    <v-list-tile-title>{{type.title}}</v-list-tile-title>
                 </v-list-tile>
             </template>
             <v-expansion-panel focusable v-model="type.foci">
                 <v-expansion-panel-content v-for="(item,i) in type.markers" :key="i">
                     <template v-slot:header>
                         
-                    <div class="markerTitle">{{item.title}}</div>
+                        <div class="markerTitle">{{item.title}}</div>
                     </template>
                     <div class="prependMarkerLink">
                         <v-btn icon>
@@ -21,9 +23,9 @@
                         </v-btn>
                     </div>
                     <v-card>
-                    <v-card-text
-                        class="grey lighten-3"
-                    >{{item.desc}}</v-card-text>
+                        <v-card-text
+                            class="grey lighten-3"
+                        >{{item.desc}}</v-card-text>
                     </v-card>
                 </v-expansion-panel-content>
             </v-expansion-panel>
@@ -41,6 +43,7 @@ export default {
                 icon: 'location_city',
                 title: 'Cities',
                 value: false,
+                show: true,
                 markers: [],
                 foci: [true],
             },
@@ -49,6 +52,7 @@ export default {
                 icon: 'store',
                 title: 'Towns',
                 value: false,
+                show: false,
                 markers: [],
                 foci: [false],
             },
@@ -57,6 +61,7 @@ export default {
                 icon: 'terrain',
                 title: 'Landmarks',
                 value: false,
+                show: true,
                 markers: [],
                 foci: [false],
             },
@@ -68,26 +73,51 @@ export default {
         },
         citymarkers() {
             if (this.app.isLoaded && this.app.mainmap.hasMap) {
-                return this.app.mainmap.citymarkers;
+                return this.app.mainmap.citymarkers.filter(item => {
+                    return item.board == this.app.mainmap.activeBoard;
+                });
             }
         },
         townmarkers() {
             if (this.app.isLoaded && this.app.mainmap.hasMap) {
-                return this.app.mainmap.townmarkers;
+                return this.app.mainmap.townmarkers.filter(item => {
+                    return item.board == this.app.mainmap.activeBoard;
+                });
             }
         },
         landmarkers() {
             if (this.app.isLoaded && this.app.mainmap.hasMap) {
-                return this.app.mainmap.landmarkers;
+                return this.app.mainmap.landmarkers.filter(item => {
+                    return item.board == this.app.mainmap.activeBoard;
+                });
+            }
+        },
+        activeBoard() {
+             if (this.app.isLoaded && this.app.mainmap.hasMap) {
+                return this.app.mainmap.activeBoard;
             }
         },
     },
+    watch: {
+        activeBoard(state) {
+            this.reShuffleMarkers();
+        }
+    },
     methods: {
         init() {
-            this.markertypes[0].markers = this.citymarkers;
-            this.markertypes[1].markers = this.townmarkers;
-            this.markertypes[2].markers = this.landmarkers;
-        }
+            this.reShuffleMarkers();
+            //
+        },
+        
+        reShuffleMarkers() {
+            this.markertypes.forEach(list => {
+                list.markers = this[list.name + 'markers'];
+                if (list.markers.length)
+                    list.show = true;
+                else
+                    list.show = false;
+            })
+        },
     }
 }
 </script>

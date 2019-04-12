@@ -13,19 +13,7 @@
       <drawertitle />
       <v-divider></v-divider>
       <v-list dense class="pt-0 mt-0">
-        <v-list-tile id="navbtns" color="grey" style="padding: 0px 0px 0px 0px;">
-          <div id="navbtn">
-            <v-btn block flat ripple>
-              <v-icon color="grey" class="pb-1 px-1">home</v-icon>
-              <span class="grey--text px-2">Home</span>
-            </v-btn>
-            <v-btn block flat ripple>
-              <v-icon color="grey" class="pb-1 px-1">comment</v-icon>
-              <span class="grey--text px-2">AMA</span>
-            </v-btn>
-          </div>
-        </v-list-tile>
-        <v-divider></v-divider>
+        
         <drawermarkers ref="drawermarkers" />
         <!-- <v-divider></v-divider> -->
         <draweractions />
