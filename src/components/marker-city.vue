@@ -1,24 +1,22 @@
 <template>
     <div class="marker" :style="getMarkerOrigin()">
-        <div class="annobox" :style="getAnnoBoxStyle()">
-
-        </div>
+        <markeranno :marker="marker" :hover="hover" :active="active" />
         <div @click="clickOn"
-        style="display:flex;justify-content:center;flex-wrap:wrap;" 
-        @mouseenter="hoverOnMarker(marker)"
-        @mouseleave="hoverOffMarker(marker)">
+            style="display:flex;justify-content:center;flex-wrap:wrap;cursor:pointer;" 
+            @mouseenter="hoverOnMarker(marker)"
+            @mouseleave="hoverOffMarker(marker)">
             <span :class="(marker.active ? 'marker-title-active' : 'marker-title-idle')" :style="getTextSize()">{{marker.title}}</span>
             <div class="placeholder">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
-                    <g v-if="marker.type.toLowerCase() == 'city'">
+                    <g v-if="/city/i.test(marker.type)">
                         <path :class="marker.active ? 'city-ring-active' : 'city-ring-idle'" d="M20,5A15,15,0,1,1,5,20,15,15,0,0,1,20,5m0-5A20,20,0,1,0,40,20,20,20,0,0,0,20,0Z"/>
                         <circle :class="marker.active ? 'city-pin-active' : 'city-pin-idle'" cx="20" cy="20" r="3"/>
                     </g>
-                    <g v-if="marker.type.toLowerCase() == 'town'">
+                    <g v-if="/town/i.test(marker.type)">
                         <circle :class="marker.active ? 'town-pin-active' : 'town-pin-idle'" cx="20" cy="20" r="17.5"/>
                         <path :class="marker.active ? 'town-ring-active' : 'town-ring-idle'" d="M20,5A15,15,0,1,1,5,20,15,15,0,0,1,20,5m0-5A20,20,0,1,0,40,20,20,20,0,0,0,20,0Z"/>
                     </g>
-                    <g v-if="marker.type.toLowerCase() == 'land'">
+                    <g v-if="/land/i.test(marker.type)">
                         <rect :class="marker.active ? 'land-pin-active' : 'land-pin-idle'" x="2.5" y="2.5" width="35" height="35"/>
                         <!-- :rx="(marker.active) ? 40 : 0" :ry="(marker.active) ? 40 : 0" -->
                     </g>
@@ -29,8 +27,13 @@
 </template>
 
 <script>
+import markeranno from './markerAnno.vue'
+
 export default {
     name: 'marker-city',
+    components: {
+        markeranno,
+    },
     props: {
         map: Object,
         align: String,
@@ -39,6 +42,7 @@ export default {
     data: () => ({
         opacity: .05,
         point: null,
+        active: false,
         hover: false,
     }),
     computed: {
@@ -48,6 +52,7 @@ export default {
     },
     mounted() {
         this.setUp();
+        this.$on('checkOverlap', this.checkForCollision)
     },
     destroyed () {
         this.$overlay.setMap(null)
@@ -81,22 +86,20 @@ export default {
     //     }
     // },
     methods: {
-        getAnnoBoxStyle() {
-            return `
-                
-
-                position: absolute;
-                bottom: 26px;
-                opacity: ${this.marker.active ? 1 : 0};
-                transition: width 200ms var(--quart) 20ms;
-                
-                padding: ${this.marker.active ? '4px 10px' : '4px 10px'};
-                width: ${this.marker.active ? 150 : 150}px;
-                height: 50px;
-                background-color: rgba(255,255,255,.95);
-                z-index: 8;
-            
-            `
+        checkForCollision() {
+            // console.log('Checking')
+            let rect1 = this.$el.getBoundingClientRect();
+            let rect2 = this.app.mainmap.crossElt.getBoundingClientRect();
+            // console.log(rect1);
+            let check = !(rect1.right < rect2.left || 
+                rect1.left > rect2.right || 
+                rect1.bottom < rect2.top || 
+                rect1.top > rect2.bottom)  
+            if (check) {
+                this.hover = true;
+            } else {
+                this.hover = false;
+            }
         },
         getMarkerOrigin() {
             return `
@@ -105,30 +108,30 @@ export default {
             `
         },
         hoverOnMarker(marker) {
-            // console.log();
-            // this.hover = true;
             let res = this.app.mainmap.markers.find(mark => {
                 return mark.title == marker.title
             })
-            // this.app.clickingOnMarker = true;
-            // this.$parent.temp = this.point;
-            // // console.log(this.$parent.temp)
+            this.hover = true;
             res.hover = true;
+            this.app.clickingOnMarker = true;
         },
         hoverOffMarker(marker) {
             let res = this.app.mainmap.markers.find(mark => {
                 return mark.title == marker.title
             })
+            this.hover = false;
             res.hover = false;
+            this.app.clickingOnMarker = false;
         },
         clickOn() {
-
-            console.log(this.$el)
+            // console.log(this.$el)
             let res = this.app.mainmap.markers.find(mark => {
                 return mark.title == this.marker.title
             })
+
             res.hover = false;
             res.active = !res.active;
+            this.active = res.active;
             if (res.active) {
                 this.$el.classList.toggle('marker-grow', !this.$el.classList.contains('marker-grow'));
                 this.$el.classList.remove('marker-shrink');
@@ -138,26 +141,9 @@ export default {
                 // this.$el.classList.toggle()
             }
 
-            
-            // console.log('Marker was clicked')
-            // console.log(this.marker)
-            // let coords = {
-            //     lat: this.marker.lat,
-            //     lng: this.marker.lng,
-            // }
-            // this.marker.hover = false;
-            // this.$parent.$parent.setLatLng(coords);
-            // this.$parent.$parent.loreRef = this.marker.dbref;
-            // this.$parent.$parent.selectedMarker = this.marker;
-            // this.$parent.$parent.showInfo = true;
+
         },
         getTextSize() {
-            // if (this.marker.active) {
-            //     return `
-            //         font-weight: ${this.marker.type.toLowerCase() == 'city' ? 700 : 500};
-            //         font-size: ${this.marker.type.toLowerCase() == 'city' ? 1.25 : 1 }rem;
-            //     ` 
-            // } else {
                 return `
                     width: 100%;
                     font-weight: ${this.marker.type.toLowerCase() == 'city' ? 700 : 500};
@@ -177,7 +163,6 @@ export default {
                 draw () {
                     const div = self.$el
                     const projection = this.getProjection()
-
                     const point = this.getProjection().fromLatLngToDivPixel(self.marker.latlng);
                     self.point = point;
                     if (point) {
@@ -216,25 +201,24 @@ export default {
 
 <style>
 
-.annobox {
-    display: none;
-    justify-content: center;
-    z-index: 7;
-}
-
 .marker {
     box-sizing: border-box;
+    /* border: 2px solid red; */
+    box-sizing: border-box;
     display: flex;
+    justify-content: flex-start;
     flex-direction: column;
     align-items: center;
-    cursor: pointer;
-    transition: transform 200ms var(--quart) 20ms;
+    
+    transition: 
+        transform 200ms var(--quart) 20ms,
+        z-index 200ms var(--quart) 20ms;
     transform-style: preserve-3D;
     z-index: 3;
 }
 .marker-grow {
-    transform: scale(2);
-    z-index: 3;
+    transform: scale(1.25);
+    z-index: 20;
 }
 .marker-shrink {
     transform: scale(1);
@@ -252,6 +236,7 @@ export default {
 
 .marker-title-active {
     color: var(--color-active);
+    
     text-shadow:
         -0.5px -0.5px 0 var(--text-titles-stroke),  
         0.5px -0.5px 0 var(--text-titles-stroke),
@@ -308,6 +293,10 @@ svg {
     stroke: var(--color-idle);
     fill: var(--color-idle);
     /* stroke-width: 1px; */
+}
+
+[class^="town-pin-"] {
+    
 }
 
 .town-pin-active {

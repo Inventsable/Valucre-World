@@ -16,9 +16,6 @@
                     </v-btn>
                     <v-toolbar-title>{{`New ${this.activeBoard} Marker`}}</v-toolbar-title>
                     <v-spacer></v-spacer>
-                    <v-toolbar-items>
-                        <v-btn dark flat @click="dialog = false">Save</v-btn>
-                    </v-toolbar-items>
                 </v-toolbar>
                 <!-- <v-card-title class="pb-0">
                     <span class="headline">{{`New ${this.activeBoard} Marker`}}</span>

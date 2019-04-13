@@ -40,6 +40,7 @@ export default {
       isLoaded: false,
       mainmap: null,
       isPrepped: false,
+      clickingOnMarker: false,
       boards: [
         {
           name: 'Terrenus',

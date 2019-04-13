@@ -46,8 +46,11 @@
         ></v-divider>
 
         <div class="tail pr-2">
-            <v-btn icon @click="toggleLock" flat>
+            <!-- <v-btn icon @click="toggleLock" flat>
                 <v-icon>{{(toggle_exclusive) ? 'lock' : 'lock_open'}}</v-icon>
+            </v-btn> -->
+            <v-btn icon @click="testLink" flat>
+                <v-icon>link</v-icon>
             </v-btn>
             <v-btn icon  @click="openDrawer" flat>
                 <v-icon>{{drawericon}}</v-icon>
@@ -143,6 +146,9 @@ export default {
         }
     },
     methods: {
+        testLink() {
+            console.log(this.app.mainmap.simplePos);
+        },
         getSearchStyle() {
             console.log(this.$vuetify.breakpoint.name);
             

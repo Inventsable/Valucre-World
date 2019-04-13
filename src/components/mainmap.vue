@@ -1,57 +1,47 @@
 <template>
     <div class="content">
         <div id="map"></div>
+        <div class="titleAlert">
+            <v-alert
+                class="pa-3"
+                v-model="hasTitleAlert"
+                dismissible
+                type="info"
+                >
+                    This map is in beta
+                </v-alert>
+        </div>
         <crosshair />
         <div v-if="hasMap">
-            <v-tooltip
-                v-model="marker.hover" bottom
-                v-for="marker in citymarkers"
-                :key="marker.dbref">
-                <template v-slot:activator="{ on }">
-                    <markercity
-                        v-on="on"
-                        :ref="marker.dbref"
-                        v-show="marker.selected || showCities"
-                        :marker="marker"
-                        :map="map"
-                        align="bottom"
-                        />
-                </template>
-                <span v-html="marker.tooltip"></span>
-            </v-tooltip>
-            <v-tooltip
-                v-model="marker.hover" bottom
-                v-for="marker in townmarkers"
-                :key="marker.dbref">
-                <template v-slot:activator="{ on }">
-                    <markercity
-                        v-on="on"
-                        :ref="marker.dbref"
-                        v-show="showTowns"
-                        :marker="marker"
-                        :map="map"
-                        align="bottom"
-                        />
-                </template>
-                <span v-html="marker.tooltip"></span>
-            </v-tooltip>
-            <v-tooltip
-                v-model="marker.hover" bottom
+            <markercity
                 v-for="marker in landmarkers"
-                :key="marker.dbref">
-                <template v-slot:activator="{ on }">
-                    <markercity
-                        v-on="on"
-                        :ref="marker.dbref"
-                        v-show="showLands"
-                        :marker="marker"
-                        :map="map"
-                        align="bottom"
-                        />
-                </template>
-                <span v-html="marker.tooltip"></span>
-            </v-tooltip>
+                :key="marker.dbref"
+                :ref="marker.dbref"
+                v-show="showLands"
+                :marker="marker"
+                :map="map"
+                align="bottom"
+                />
+            <markercity
+                v-for="marker in townmarkers"
+                :key="marker.dbref"
+                :ref="marker.dbref"
+                v-show="showTowns"
+                :marker="marker"
+                :map="map"
+                align="bottom"
+                />
+            <markercity
+                v-for="marker in citymarkers"
+                :key="marker.dbref"
+                :ref="marker.dbref"
+                v-show="marker.selected || showCities"
+                :marker="marker"
+                :map="map"
+                align="bottom"
+                />
         </div>
+        <div id="overlay"></div>
     </div>
 </template>
 
@@ -73,8 +63,10 @@ export default {
     },
     data: () => ({
         drawer: false,
+        crossElt: null,
         map: null,
         zoom: 2,
+        hasTitleAlert: true,
         isAdding: false,
         crosshairType: 'default',
         hasRestriction: false,
@@ -169,6 +161,16 @@ export default {
                 return marker.active;
             });
         },
+        markerDBsInActiveBoard() {
+            let actives = this.markers.filter((marker) => {
+                return marker.board == this.activeBoard;
+            })
+            let mirror = [];
+            actives.forEach(val => {
+                mirror.push(val.dbref);
+            })
+            return mirror;
+        },
         showCities() {
             if (/xs|sm/.test(this.$vuetify.breakpoint.name)) {
                 if (this.zoom >= 2)
@@ -227,43 +229,94 @@ export default {
     },
     created() {
         let boards = ['Terrenus', 'Orisia', 'Genesaris', 'Renovatio', 'Alterion']
+
         boards.forEach(board => {
-            db.collection(board).get()
-            .then(snapshot => {
-                console.log(snapshot);
-                snapshot.docs.forEach(doc => {
-                    let marker = doc.data();
-                    this.markers.push({
-                        board: marker.board,
-                        dbref: marker.dbref,
-                        desc: marker.desc,
-                        lat: marker.lat,
-                        lng: marker.lng,
-                        latlng: new google.maps.LatLng({
-                            lat: marker.lat,
-                            lng: marker.lng,
-                        }),
-                        link: marker.link,
-                        tags: marker.tags,
-                        title: marker.title,
-                        tooltip: marker.tooltip,
-                        type: marker.type,
-                        hover: false,
-                        active: false,
+            let ref = db.collection(board)
+                ref.onSnapshot(snapshot => {
+                    snapshot.docChanges().forEach(change => {
+                        let marker = change.doc.data()
+                        // console.log(change.type)
+                        if (/added|modified/i.test(change.type)) {
+                            if (/modified/i.test(change.type)) {
+                                let edited = this.markers.find((targ) => {
+                                    return marker.dbref == targ.dbref;
+                                })
+                                edited = {
+                                    board: marker.board,
+                                    dbref: marker.dbref,
+                                    desc: marker.desc,
+                                    lat: marker.lat,
+                                    lng: marker.lng,
+                                    image: marker.image,
+                                    details: marker.details,
+                                    alert: marker.alert,
+                                    latlng: new google.maps.LatLng({
+                                        lat: marker.lat,
+                                        lng: marker.lng,
+                                    }),
+                                    link: marker.link,
+                                    tags: marker.tags,
+                                    title: marker.title,
+                                    // tooltip: marker.tooltip,
+                                    type: marker.type,
+                                    hover: false,
+                                    active: false,
+                                }
+                                console.log(`${marker.title} was edited`)
+                                console.log(edited);
+                            } else {
+
+                                this.markers.push({
+                                    board: marker.board,
+                                    dbref: marker.dbref,
+                                    desc: marker.desc,
+                                    lat: marker.lat,
+                                    lng: marker.lng,
+                                    image: marker.image,
+                                    details: marker.details,
+                                    alert: marker.alert,
+                                    latlng: new google.maps.LatLng({
+                                        lat: marker.lat,
+                                        lng: marker.lng,
+                                    }),
+                                    link: marker.link,
+                                    tags: marker.tags,
+                                    title: marker.title,
+                                    // tooltip: marker.tooltip,
+                                    type: marker.type,
+                                    hover: false,
+                                    active: false,
+                                })
+                            }
+                        } else if (/removed/i.test(change.type)) {
+                            this.markers = this.markers.filter((targ) => {
+                                return marker.dbref !== targ.dbref;
+                            })
+                        }
                     })
                 })
-                // console.log(this.markers)
-            })
+
         })
     },
     mounted() {
         // console.log('Hello world');
         this.initMap();
+        // this.createCanvas();
         window.addEventListener('resize', this.automateBounds);
         this.automateBounds();
         this.constructBoardBounds();
+        this.crossElt = document.getElementById('crossHair');
     },
     methods: {
+        panToPoint(point) {
+            this.map.panTo(point);
+        },
+        getMarkerDesc(marker) {
+            // let test = new google.maps.OverlayView();
+            // this.createCanvas(marker);
+            // console.log(test)
+            console.log(marker)
+        },
         constructBoardBounds() {
             this.boards.forEach(name => {
                 let board = this.bounds[name];
@@ -295,10 +348,29 @@ export default {
             // console.log(`Active board is ${this.activeBoard}`);
         },
         panToSelectedMarker() {
-            this.map.panTo({
-                lat: this.selectedMarker.lat,
-                lng: this.selectedMarker.lng,
-            })
+            const self = this;
+            // if (/xs|sm/i.test(this.$vuetify.breakpoint.name)) {
+            //     if (/xs/i.test(this.$vuetify.breakpoint.name)) {
+            //         let check = this.map.getBounds();
+            //         self.map.panTo({
+            //             // lat: check.ma.l,
+            //             lat: self.selectedMarker.lat,
+            //             lng: self.selectedMarker.lng,
+            //         })
+            //     } else {
+            //         let check = this.map.getBounds();
+            //         self.map.panTo({
+            //             lat: check.ma.l,
+            //             lng: self.selectedMarker.lng,
+            //         })
+
+            //     }
+            // } else {
+                this.map.panTo({
+                    lat: this.selectedMarker.lat,
+                    lng: this.selectedMarker.lng,
+                })
+            // }
         },
         resetBounds() {
             if (this.hasRestriction) {
@@ -408,12 +480,16 @@ export default {
             });
             self.map.mapTypes.set('Valucre', valMapType);
             self.map.setMapTypeId(self.mapType);
-            // console.log('set map')
             self.map.setOptions({ disableDefaultUI: true })
-            
+            this.hasMap = true;
 
             google.maps.event.addListener(this.map, 'click', (event) => {
-                // self.addCustomMarker(event);
+                // deselection should occur here
+            });
+            google.maps.event.addListener(this.map, 'center_changed', () => {
+                self.assignCenter();
+                // console.log(simplePos);
+
             });
             google.maps.event.addListener(this.map, 'zoom_changed', () => {
                 self.zoom = self.map.getZoom();
@@ -421,35 +497,36 @@ export default {
             google.maps.event.addListener(this.map, 'maptypeid_changed', () => {
                 // self.mapType = self.map.getMapTypeId();
             });
+            
             google.maps.event.addListener(this.map, 'idle', function() {
-                // self.app.setZoom(self.map.getZoom());
-                // self.app.setLatLng(self.map.getCenter());
-                // self.app.changePoint(self.map.getCenter());
-                // console.log(`${self.app.activeBoard}`)
-                // console.log(`${}`)
-
-                
-                
-                let realPos = new google.maps.LatLng({
-                    lat: self.map.getCenter().lat(),
-                    lng: self.map.getCenter().lng(),
-                });
-                self.simplePos = {
-                    lat: +realPos.lat().toFixed(3),
-                    lng: +realPos.lng().toFixed(3),
-                };
-                self.realLatLng = realPos;
-                
-                // console.log(`${}`)
-                // console.log(self.simplePos);
-                // let currentview = self.map.getBounds();
-                self.findBoardInCurrentView();
-                // console.log(currentview)
+                self.assignCenter();
             });
 
-            this.hasMap = true;
+            
             this.app.mainmap = this;
             
+        },
+        assignCenter() {
+            const self = this;
+            let realPos = new google.maps.LatLng({
+                lat: self.map.getCenter().lat(),
+                lng: self.map.getCenter().lng(),
+            });
+            this.simplePos = {
+                lat: +realPos.lat().toFixed(3),
+                lng: +realPos.lng().toFixed(3),
+            };
+            this.realLatLng = realPos;
+            this.findBoardInCurrentView();
+            // this.$emit('checkOverlap');
+            // console.log(this.simplePos)
+            // console.log(this.markerDBsInActiveBoard);
+            // console.log(this.$refs);
+            const refList = this.$refs;
+            this.markerDBsInActiveBoard.forEach(test => {
+                // console.log(refList[test]);
+                refList[test][0].checkForCollision();
+            })
         },
         setZoom(result) {
             if (result <= this.maxZoom) {
@@ -580,6 +657,14 @@ export default {
         /* margin-top: 48px; */
         height: calc(100vh - 48px);
         width: 100%;
+    }
+
+    .titleAlert {
+        position: absolute;
+        /* top: 48px; */
+        top: 0px;
+        width: 100%;
+        /* border: 2px solid red; */
     }
 
 </style>
