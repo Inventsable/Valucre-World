@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div v-if="hasPermissions()">
         <v-list-group
             prepend-icon="edit" value="false">
             <template v-slot:activator>
@@ -64,6 +64,18 @@ export default {
         }
     },
     methods: {
+        hasPermissions() {
+            if (this.app.isLoaded) {
+                console.log('Checking permissions');
+                if (this.app.permissions.includes('World')) {
+                    return true;
+                } else if (this.app.permissions.includes(this.app.mainmap.activeBoard)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        },
         openMarkerDialog() {
             if (this.app.isLoaded) {
                 this.app.$refs.dialogmarker.dialog = true;

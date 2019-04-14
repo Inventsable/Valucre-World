@@ -1,6 +1,9 @@
 <template>
     <div class="content">
-        <div id="map"></div>
+        <div id="map"
+            @mouseenter="cursorOnMap()"
+            @mouseleave="cursorOffMap()"
+        ></div>
         <div class="titleAlert">
             <v-alert
                 class="pa-3"
@@ -12,7 +15,7 @@
                 </v-alert>
         </div>
         <crosshair />
-        <div v-if="hasMap">
+        <div v-if="hasMap" id="mapOverlay">
             <markercity
                 v-for="marker in landmarkers"
                 :key="marker.dbref"
@@ -62,21 +65,26 @@ export default {
         markercity,
     },
     data: () => ({
+        inMap: false,
         drawer: false,
         crossElt: null,
         map: null,
         zoom: 2,
-        hasTitleAlert: true,
+        starting: true,
+        hasTitleAlert: false,
         isAdding: false,
+        wasScrolling: false,
         crosshairType: 'default',
         hasRestriction: false,
         hasMap: false,
         maxZoom: 6,
-        minZoom: 1,
+        minZoom: 0,
         lat: 20,
         lng: 125,
         mapType: 'Valucre',
         activeBoard: null,
+        hovMarker: null,
+        selMarker: null,
         boards: [
             'Terrenus',
             'Orisia',
@@ -85,15 +93,17 @@ export default {
             'Genesaris',
         ],
         isHarsh: false,
+        fitToBoard: false,
         bounds: {
             Terrenus: {
                 north: 60,
                 west: 75,
-                east: 175,
+                east: 180,
                 south: -30,
                 ne: null,
                 sw: null,
                 area: null,
+                center: null,
             },
             Renovatio: {
                 north: -9,
@@ -103,6 +113,7 @@ export default {
                 ne: null,
                 sw: null,
                 area: null,
+                center: null,
             },
             Alterion: {
                 north: -27,
@@ -112,6 +123,7 @@ export default {
                 ne: null,
                 sw: null,
                 area: null,
+                center: null,
             },
             Genesaris: {
                 north: 15,
@@ -121,17 +133,20 @@ export default {
                 ne: null,
                 sw: null,
                 area: null,
+                center: null,
             },
             Orisia: {
-                north: -8,
-                west: -35,
+                north: -6,
+                west: -40,
                 east: -20,
                 south: -20,
                 ne: null,
                 sw: null,
                 area: null,
+                center: null,
             },
         },
+        mapLoaded: false,
         realLatLng: null,
         simplePos: {
             lat: null,
@@ -149,8 +164,11 @@ export default {
             south: -60,
             west: 30,
         },
-        center: {lat: 20, lng: 125},
+        center: {lat: 20, lng: -125},
         markers: [],
+        hideCities: false,
+        hideTowns: false,
+        hideLands: false,
     }),
     computed: {
         app() {
@@ -159,6 +177,11 @@ export default {
         selectedMarker() {
             return this.markers.find((marker) => {
                 return marker.active;
+            });
+        },
+        hoveredMarker() {
+            return this.markers.find((marker) => {
+                return marker.hover;
             });
         },
         markerDBsInActiveBoard() {
@@ -201,7 +224,6 @@ export default {
                 else
                     return false;
             }
-            
         },
         townmarkers() {
             return this.markers.filter((marker) => {
@@ -228,8 +250,8 @@ export default {
         },
     },
     created() {
+        this.starting = true;
         let boards = ['Terrenus', 'Orisia', 'Genesaris', 'Renovatio', 'Alterion']
-
         boards.forEach(board => {
             let ref = db.collection(board)
                 ref.onSnapshot(snapshot => {
@@ -243,12 +265,19 @@ export default {
                                 })
                                 edited = {
                                     board: marker.board,
+                                    contactLink: marker.contactLink,
+                                    contactAvatar: marker.contactAvatar,
+                                    annoElt: null,
+                                    labelElt: null,
                                     dbref: marker.dbref,
                                     desc: marker.desc,
                                     lat: marker.lat,
                                     lng: marker.lng,
                                     image: marker.image,
                                     details: marker.details,
+                                    hide: false,
+                                    minZoom: marker.minZoom,
+                                    maxZoom: marker.maxZoom,
                                     alert: marker.alert,
                                     latlng: new google.maps.LatLng({
                                         lat: marker.lat,
@@ -268,11 +297,15 @@ export default {
 
                                 this.markers.push({
                                     board: marker.board,
+                                    contactLink: marker.contactLink,
+                                    contactAvatar: marker.contactAvatar,
                                     dbref: marker.dbref,
                                     desc: marker.desc,
                                     lat: marker.lat,
                                     lng: marker.lng,
                                     image: marker.image,
+                                    minZoom: marker.minZoom,
+                                    maxZoom: marker.maxZoom,
                                     details: marker.details,
                                     alert: marker.alert,
                                     latlng: new google.maps.LatLng({
@@ -282,8 +315,11 @@ export default {
                                     link: marker.link,
                                     tags: marker.tags,
                                     title: marker.title,
-                                    // tooltip: marker.tooltip,
                                     type: marker.type,
+                                    // tooltip: marker.tooltip,
+                                    annoElt: null,
+                                    labelElt: null,
+                                    hide: false,
                                     hover: false,
                                     active: false,
                                 })
@@ -293,10 +329,20 @@ export default {
                                 return marker.dbref !== targ.dbref;
                             })
                         }
+                        // console.log('Tier 3')
                     })
+                    // console.log('Tier 2')
                 })
-
+            // console.log('Tier 1')
         })
+        // console.log('Tier 0')
+        setTimeout(() => {
+            // console.log(this.markers)
+            // console.log('Checking route')
+            if (this.$route.params.pathMatch)
+                console.log('Decode now')
+                this.decodeStartPos(this.$route.params.pathMatch);
+        }, 1600);
     },
     mounted() {
         // console.log('Hello world');
@@ -306,10 +352,23 @@ export default {
         this.automateBounds();
         this.constructBoardBounds();
         this.crossElt = document.getElementById('crossHair');
+        this.$el.addEventListener('touchstart', this.handleTouch)
     },
     methods: {
+        handleTouch(evt) {
+            this.inMap = true;
+            // console.log('Touching')
+        },
         panToPoint(point) {
             this.map.panTo(point);
+        },
+        cursorOnMap() {
+            // console.log('Entering map');
+            this.inMap = true;
+        },
+        cursorOffMap() {
+            // console.log('Leaving map')
+            this.inMap = false;
         },
         getMarkerDesc(marker) {
             // let test = new google.maps.OverlayView();
@@ -329,7 +388,10 @@ export default {
                     lng: board.east,
                 });
                 board.area = new google.maps.LatLngBounds(board.sw, board.ne);
+                board.center = board.area.getCenter();
             })
+            console.log('Bounds have been created')
+            console.log(this.bounds);
         },
         findBoardInCurrentView() {
             // console.log(`lat: ${this.simplePos.lat}, lng: ${this.simplePos.lng}`);
@@ -408,6 +470,7 @@ export default {
             this.resetBounds();
         },
         initMap() {
+            // console.log(`Center on creation is [${this.center.lat}, ${this.center.lng}]`)
             this.map = new google.maps.Map(
                 document.getElementById('map'), {
                     zoom: this.zoom,
@@ -419,7 +482,7 @@ export default {
                         position: google.maps.ControlPosition.LEFT_BOTTOM
                     },
                     mapTypeControl: false,
-                    disableDoubleClickZoom: true,
+                    // disableDoubleClickZoom: true,
                     mapTypeControlOptions: {
                         mapTypeIds: ['Valucre', 'roadmap']
                     },
@@ -485,9 +548,15 @@ export default {
 
             google.maps.event.addListener(this.map, 'click', (event) => {
                 // deselection should occur here
+                if (/xs|sm/.test(this.$vuetify.breakpoint.name))
+                    self.inMap = true;
             });
             google.maps.event.addListener(this.map, 'center_changed', () => {
                 self.assignCenter();
+                self.wasScrolling = true
+                setTimeout(() => {
+                    self.wasScrolling = false;
+                }, 500);
                 // console.log(simplePos);
 
             });
@@ -500,11 +569,57 @@ export default {
             
             google.maps.event.addListener(this.map, 'idle', function() {
                 self.assignCenter();
+                self.checkAnnoBox();
+                
             });
 
-            
+            this.mapLoaded = true;
             this.app.mainmap = this;
             
+        },
+        resetHovers() {
+            this.markers.forEach(marker => {
+                marker.hover = false;
+            })
+            const refList = this.$refs;
+            this.markers.forEach(test => {
+                refList[test.dbref][0].resetHover();
+            })
+        },
+        resetHidden() {
+            this.markers.forEach(marker => {
+                marker.hide = false;
+            })
+            console.log('Unhiding all')
+        },
+        resetActivesExcept(ref) {
+            // console.log(`Reset all except ${ref}`)
+            let temp = this.markers.filter(marker => {
+                return marker.dbref !== ref;
+            })
+            // console.log(temp)
+            const refList = this.$refs;
+            temp.forEach(mark => {
+                // console.log(`Reset ${mark.title}`)
+                refList[mark.dbref][0].active = false;
+                refList[mark.dbref][0].resetActive();
+                mark.active = false;
+            })
+            // this.markers.forEach(marker => {
+            //     marker.active = false;
+            // })
+        },
+        resetAllCalcDistance() {
+            const refList = this.$refs;
+            this.markers.forEach(test => {
+                refList[test.dbref][0].resetDistance();
+            })
+        },
+        resetAllScales() {
+            const refList = this.$refs;
+            this.markers.forEach(test => {
+                refList[test.dbref][0].resetScale();
+            })
         },
         assignCenter() {
             const self = this;
@@ -518,15 +633,22 @@ export default {
             };
             this.realLatLng = realPos;
             this.findBoardInCurrentView();
-            // this.$emit('checkOverlap');
-            // console.log(this.simplePos)
-            // console.log(this.markerDBsInActiveBoard);
-            // console.log(this.$refs);
             const refList = this.$refs;
             this.markerDBsInActiveBoard.forEach(test => {
-                // console.log(refList[test]);
                 refList[test][0].checkForCollision();
             })
+            let checkHover = this.markers.find(marker => {
+                return marker.hover == true;
+            })
+            let checkActive = this.markers.find(marker => {
+                return marker.active == true;
+            })
+            if (!checkActive || !checkHover) {
+                // console.log('Repaint')
+                this.markers.forEach(marker => {
+                    marker.hide = false;
+                })
+            }
         },
         setZoom(result) {
             if (result <= this.maxZoom) {
@@ -552,98 +674,192 @@ export default {
             if (x < 0 || x >= tileRange) { x = (x % tileRange + tileRange) % tileRange; }
             return {x: x, y: y};
         },
+        checkAnnoBox() {
+            const refList = this.$refs;
+            this.markers.forEach(mark => {
+                refList[mark.dbref][0].checkForCollisionOfAnnoBox();
+            })
+        },
         doInitAction() {
+            // console.log('Initializing');
+            const refList = this.$refs;
+            this.markers.forEach(mark => {
+                // console.log(refList[mark]);
+                refList[mark.dbref][0].assignAnnoElt();
+            })
             if (this.$route.params.pathMatch) {
                 console.log(this.$route.params.pathMatch)
                 this.decodeRoute(this.$route.params.pathMatch);
             }
         },
+        decodeStartPos(str) {
+            const self = this;
+            let rx = {
+                select: /select\=[^&]*&/,
+                hover: /hover\=[^&]*&/,
+                board: /board\=[^0-9]*&/,
+                z: /z[\d](toz[\d])?/,
+                lat: /lat[^a-zA-Z]*/,
+                lng: /lng[^a-zA-Z]*/,
+                key: /key\=[^&]*&/,
+            };
+            if (rx.key.test(str)) {
+                let result = str.match(rx.key)[0];
+                result = result.replace('key\=', '').replace('\&', '');
+                // console.log(`Trying to unlock with ${result}`);
+                db.collection('keys').where('key', '==', result).get()
+                    .then(snapshot => {
+                        // try {
+                            if (snapshot.docs.length) {
+                                let unlocked = snapshot.docs[0];
+                                let id = unlocked.id;
+                                self.app.permissions.push(id);
+                                console.log(`Unlocked ${id} permissions`);
+                            } else {
+                                console.log('Failed')
+                                self.app.permissions = [];
+                            }
+                    })
+
+            }
+            if (rx.board.test(str)) {
+                // console.log('Fit to board');
+                this.fitToBoard = true;
+                let result = str.match(rx.board)[0];
+                result = result.replace('board\=', '').replace('\&', '');
+                console.log(`Fit to ${result}`)
+                let active = this.bounds[result];
+                if (this.mapLoaded) {
+                    // console.log(`Setting center to ${active.center}`)
+                    this.map.setCenter(active.center);
+                } else {
+                    this.center = active.center;
+                }
+            } else {
+                if ((rx.lat.test(str)) && (rx.lng.test(str))) {
+                    if ((!rx.hover.test(str)) && (!rx.hover.test(str))) {
+                        let resultLat = str.match(rx.lat)[0];
+                        let resultLng = str.match(rx.lng)[0];
+        
+                        this.center.lat = +resultLat.replace('lat','');
+                        this.center.lng = +resultLng.replace('lng','');
+                        console.log(`Changed map center to [${resultLat}, ${resultLng}]`)
+                        this.map.setCenter(this.center);
+                    } else {
+                        console.log(`Start pos overridden by hover or active`)
+                    }
+                }
+                if (rx.z.test(str)) {
+                    let result = str.match(rx.z)[0];
+                    if (/to/i.test(result)) {
+                        result = result.split('to');
+                        result = +result[0].replace('z', '');
+                    } else {
+                        result = +result.replace('z', '')
+                    }
+                    this.zoom = result;
+                    this.map.setZoom(this.zoom)
+                    // console.log(`Changed zoom to ${result}`)
+                }
+                if (rx.select.test(str)) {
+                    let result = str.match(rx.select)[0];
+                    result = result.replace('select\=', '').replace('\&', '');
+                    // console.log('Change select');
+                    let temp = this.markers.find(marker => {
+                        return marker.dbref == result;
+                    })
+                    // temp.active = true;
+                    // console.log(`Change coords to selection: ${result}`)
+                    this.center.lat = temp.lat;
+                    this.center.lng = temp.lng;
+                    // console.log(`${temp.lat}, ${temp.lng}`)
+                    if (rx.hover.test(str)) {
+                        temp.hover = false;
+                    }
+                    if (this.mapLoaded) {
+                        // console.log('Map is already loaded')
+                        this.map.setCenter({
+                            lat: temp.lat,
+                            lng: temp.lng,
+                        })
+                        this.$refs[temp.dbref][0].clickOn();
+                        this.selMarker = temp;
+                    } else {
+                        // console.log(`Center should be [${this.center.lat}, ${this.center.lng}]`);
+                    }
+                    if (!rx.hover.test(str)) {
+                        // console.log('Should not pan to hovered')
+                    }
+                }
+                if (rx.hover.test(str)) {
+                    let result = str.match(rx.hover)[0];
+                    result = result.replace('hover\=', '').replace('\&', '');
+                    let temp = this.markers.find(marker => {
+                        return marker.dbref == result;
+                    })
+                    temp.hover = true;
+    
+                    this.center.lat = temp.lat;
+                    this.center.lng = temp.lng;
+                    this.hovMarker = temp;
+                    if (this.mapLoaded) {
+                        if (!rx.select.test(str)) {
+                            this.map.setCenter({
+                                lat: temp.lat,
+                                lng: temp.lng,
+                            })
+                            // this.$refs[temp.dbref][0].clickOn();
+                        }
+                    } else {
+                        // console.log(`Center should be [${this.center.lat}, ${this.center.lng}]`);
+                    }
+                }
+            }
+
+        },
         decodeRoute(str) {
             const self = this;
             let rx = {
                 z: /z[\d](toz[\d])?/,
-                lat: /lat[^a-zA-Z]*/,
-                lng: /lng[^a-zA-Z]*/,
-                ref: /ref\=.*\&/,
-                info: /info/,
-                points: /p[a-z][^a-z]*/gm,
-                maptype: /type\=.*/,
-                km: /km/,
-                mi: /mi/,
+                select: /select\=[^&]*&/,
+                hover: /hover\=[^&]*&/,
+                board: /board\=[^0-9]*&/,
             };
-            let match = ['z', 'lat', 'lng', 'ref', 'info', 'points', 'maptype', 'km', 'mi']
-            let changecoords = false;
-            match.forEach(param => {
-                if (rx[param].test(str)) {
-                    let result = str.match(rx[param]);
-                    // if (/points/.test(param)) {
-                    //     // this.addPoints(result);
-                    //     let mirror = [];
-                    //     let pack = {};
-                    //     result.forEach((arg, v) => {
-                    //         if ((!this.isOdd(v)) || (v == 0)) {
-                    //             pack = {};
-                    //             // console.log(`lat: ${+arg.substring(2)}`)
-                    //             pack['lat'] = +arg.substring(2);
-                    //         } else {
-                    //             // console.log(`lng: ${+arg.substring(2)}`)
-                    //             pack['lng'] = +arg.substring(2);
-                    //             mirror.push(pack);
-                    //         }
-                    //     })
-                    //     this.points = mirror;
-                    //     this.checkDistanceOfPath();
-                    //     this.app.showDist = true;
-                    //     this.app.enableDistance();
-                    //     // this.getPathDistance(mirror, false);
-                    // } else {
+            if (rx.board.test(str)) {
+                let match = str.match(rx.board)[0];
+                match = match.replace('board\=', '').replace('\&', '');
+                console.log(`Fitting to ${match}`)
+                setTimeout(() => {
+                    self.map.fitBounds(self.bounds[match].area);
+                }, 600);
+            } else {
+                let match = ['z']
+                match.forEach(param => {
+                    if (rx[param].test(str)) {
+                        let result = str.match(rx[param]);
                         let results = result;
                         result = result[0];
-                        // console.log(result);
                         if (/z/.test(param)) {
-                            // console.log(result)
-                            // console.log(results)
                             if (/to/i.test(result)) {
                                 results = result.split('to');
-                                // console.log(`Zoom in initially to ${results[0]}`)
-                                this.setZoom(+results[0].replace('z', ''))
                                 setTimeout(() => {
-                                    // console.log(`Zoom in again to ${results[1]}`)
-                                    this.setZoom(+results[1].replace('z', ''))
-                                }, 1000);
+                                    // console.log(`Zoom in again to ${+results[1].replace('z', '')}`)
+                                    if (rx.select.test(str)) {
+                                        // console.log(`Start on ${self.selectedMarker.title}`)
+                                        if (rx.hover.test(str)) {
+                                            self.map.panTo(this.hovMarker.latlng);
+                                        }
+                                    }
+                                    self.setZoom(+results[1].replace('z', ''))
+                                }, 600);
                             } else {
-                                this.setZoom(+result.replace('z', ''))
+                                // console.log(`Map is already at ${+results[0].replace('z', '')}`)
                             }
                         }
-                        if (/lat|lng/.test(result)) {
-                            changecoords = true;
-                            self[param] = +result.replace(param, '');
-                        }
-                        if (/ref/.test(param)) {
-                            // console.log('ref result')
-                            setTimeout(() => {
-                                console.log(result)
-                                // self.setRef(result);
-                            }, 500);
-                        }
-                        // if (/info/.test(param))
-                        //     this.app.$refs.lore.drawer = true;
-                        // if (/maptype/.test(param)) {
-                        //     this.setMapTypeFromURL(result);
-                        // }
-                        // if (/(km|mi)/.test(param)) {
-                        //     // @@
-                        //     // console.log(`Set units to ${result}`)
-                        //     self.$refs.distancebar.setSelection(result);
-                        //     self.$root.$children[0].unitToMeasure = result;
-                        // }
-                    // }
-                    console.log(result)
-                    
-                }
-            })
-            if (changecoords)
-                this.setLatLng();
+                    }
+                })
+            }
+
         },
         isOdd(num) {
             return num % 2;

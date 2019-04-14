@@ -11,51 +11,83 @@
             :hover="hover"
             :active="active"
             />
-        
+        <markerannodistance
+            :marker="marker"
+            :hover="hover"
+            :active="active"
+            />
     </div>
 </template>
 
 <script>
 import markerannohover from './markerAnnoHover.vue'
 import markerannoactive from './markerAnnoActive.vue'
+import markerannodistance from './markerAnnoDistance.vue'
 
 export default {
     name: 'markeranno',
     components: {
         markerannoactive,
         markerannohover,
+        markerannodistance
     },
     data: () => ({
         defImg: 'https://cdn.vuetifyjs.com/images/cards/sunshine.jpg',
+        calculatingDistance: false,
     }),
+    mounted() {
+        
+    },
     props: {
         marker: Object,
         active: Boolean,
         hover: Boolean,
         length: 3,
         window: 0,
+        
     },
     methods: {
-        
+        init() {
+            this.marker.annoElt = this.$el;
+            // console.log('Marker assigned anno elt');
+            // console.log(this.marker.annoElt);
+        },
         getAnnoBoxStyle() {
             return `
+                z-index: 110;
                 width: 300px;
             `
         },
-        getAnnoBoxLegacyStyle() {
-            return `
-                position: absolute;
-                bottom: 26px;
-                opacity: ${this.marker.active ? 1 : 0};
-                transition: width 200ms var(--quart) 20ms;
-                
-                padding: ${this.marker.active ? '4px 10px' : '4px 10px'};
-                width: ${this.marker.active ? 150 : 150}px;
-                height: 50px;
-                background-color: rgba(255,255,255,.95);
-                z-index: 8;
-            `
+        
+    },
+    computed: {
+        app() {
+            return this.$root.$children[0];
         },
+        // calculatingDistance() {
+        //     if (this.app.isLoaded) {
+        //         let active = this.app.mainmap.markers.find(marker => {
+        //             return marker.active;
+        //         })
+        //         let hover = this.app.mainmap.markers.find(marker => {
+        //             return marker.hover && marker.title !== active.title;
+        //         })
+        //         console.log(active);
+        //         console.log(hover);
+        //         if (active && hover) {
+
+        //             if (active.title !== hover.title) {
+    
+        //                 return true;
+        //             } else {
+        //                 return false;
+        //             }
+        //         } else {
+                    
+        //             return false;
+        //         }
+        //     }
+        // }
     },
     mounted() {
 
@@ -68,6 +100,7 @@ export default {
     /* border: 2px solid blue; */
     position: absolute;
     bottom: 30px;
+    z-index: 200;
 }
 
 .titleBar {

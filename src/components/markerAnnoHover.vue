@@ -1,5 +1,5 @@
 <template>
-    <v-card min-width="300" v-if="!active && hover">
+    <v-card min-width="300" v-if="!active && !calculatingDistance && hover">
             <v-alert
                 dense
                 :value="hasAlert(marker)"
@@ -60,6 +60,9 @@ export default {
     computed: {
         defImg() {
             return this.$parent.defImg;
+        },
+        calculatingDistance() {
+            return this.$parent.calculatingDistance;
         }
     },
     data: () => ({
@@ -69,7 +72,7 @@ export default {
         hasAlert() {
             // console.log(this.marker.alert);
             if (this.marker.alert.length) {
-                console.log(`${this.marker.alert} has length`)
+                // console.log(`${this.marker.alert} has length`)
                 return true;
             } else {
                 return false;

@@ -1,7 +1,13 @@
 <template>
-    <div class="marker" :style="getMarkerOrigin()">
-        <markeranno :marker="marker" :hover="hover" :active="active" />
-        <div @click="clickOn"
+    <div 
+        v-click-outside="onClickOutside" 
+        class="marker" 
+        :style="getMarkerOrigin()" 
+        v-show="checkStatus()"
+        >
+        <markeranno ref="anno" :marker="marker" :hover="hover" :active="active" />
+        <div
+            @click="clickOn"
             style="display:flex;justify-content:center;flex-wrap:wrap;cursor:pointer;" 
             @mouseenter="hoverOnMarker(marker)"
             @mouseleave="hoverOffMarker(marker)">
@@ -86,24 +92,132 @@ export default {
     //     }
     // },
     methods: {
+        checkStatus() {
+            let result = false;
+            if (this.marker.active) {
+                // console.log(`${this.marker.title} passes from selection`)
+                return true;
+            } else {
+                if (this.app.mainmap.zoom < +this.marker.minZoom) {
+                    if (/xs|sm/.test(this.$vuetify.breakpoint.name)) {
+                        if (this.app.mainmap.zoom >= +this.marker.minZoom - 1) {
+                            if (this.marker.hide) {
+                                // console.log(`${this.marker.title} failed because hidden`);
+                            } else {
+                                // console.log(`${this.marker.title} matches mobile ${+this.marker.minZoom - 1} of current ${this.app.mainmap.zoom}`);
+                                result = true;
+                            }
+                        } else {
+                            // console.log(`${this.marker.title} fails mobile ${+this.marker.minZoom - 1} of current ${this.app.mainmap.zoom}`)
+                            if (!this.marker.hide) {
+                                result = false;
+                            }
+                        }
+                    } else {
+                        result = false;
+                        // console.log(`${this.marker.title} needs ${this.marker.minZoom} of current ${this.app.mainmap.zoom}`);
+                    }
+                } else if (this.marker.hide) {
+                    // console.log(`${this.marker.title} is hidden`);
+                    result = false;
+                } else {
+                    // console.log(`${this.marker.title} is shown by default`)
+                    result = true;
+                }
+            }
+            return result;
+        },
+        onClickOutside (e, el) {
+            // console.log('clickedOutside');
+            if (this.active) {
+                if (!this.app.mainmap.wasScrolling) {
+                    // console.log('Was not scrolling')
+                    if (this.app.mainmap.inMap) {
+                        this.active = false;
+                        this.marker.active = false;
+                        // console.log(e);
+                        // console.log(`Deselect ${this.marker.title}`)
+                        this.app.mainmap.resetHovers();
+                        this.app.mainmap.resetAllScales();
+                    } else {
+                        // console.log(`Click wasn't in map`)
+                    }
+                }
+            }
+            // console.log('click heard outside element:', el);
+            // console.log('element clicked:', e.target);
+            // console.log('event:', e);
+        },
+        assignAnnoElt() {
+            this.$refs.anno.init();
+            this.marker.labelElt = this.$el;
+        },
+        resetActive() {
+            this.active = false;
+            if (!this.active)
+                this.$el.classList.replace('marker-grow', 'marker-shrink');
+        },
+        resetScale() {
+            // console.log(this.marker.title);
+            // console.log(this.$el.classList);
+            this.$el.classList.replace('marker-grow', 'marker-shrink');
+        },
+        resetHover() {
+            this.hover = false;
+            // this.$el.classList.replace('marker-grow', 'marker-shrink');
+        },
+        resetDistance() {
+            this.$refs.anno.calculatingDistance = false;
+        },
         checkForCollision() {
-            // console.log('Checking')
             let rect1 = this.$el.getBoundingClientRect();
             let rect2 = this.app.mainmap.crossElt.getBoundingClientRect();
-            // console.log(rect1);
             let check = !(rect1.right < rect2.left || 
                 rect1.left > rect2.right || 
                 rect1.bottom < rect2.top || 
                 rect1.top > rect2.bottom)  
             if (check) {
                 this.hover = true;
+                this.marker.hover = true;
             } else {
                 this.hover = false;
+                this.marker.hover = false;
+            }
+            this.checkIfDistance();
+        },
+        checkForCollisionOfAnnoBox() {
+            try {
+
+                if (this.active || this.hover) {
+                    let rect1 = this.marker.annoElt.getBoundingClientRect();
+                    let mapBounds = this.app.mainmap.map.getBounds();
+                    // let markersWithinView = this.app.mainmap.markers.filter(marker => {
+                    //     return mapBounds.contains(marker.latlng) && marker !== this.marker;
+                    // })
+                    // console.log(markersWithinView);
+                    // markersWithinView.forEach(target => {
+                    this.app.mainmap.markers.forEach(target => {
+                        // console.log(`Checking ${target.title} for overlap hover`)
+                        let rect2 = target.labelElt.getBoundingClientRect();
+                        let check = !(rect1.right < rect2.left || 
+                            rect1.left > rect2.right || 
+                            rect1.bottom < rect2.top || 
+                            rect1.top > rect2.bottom)  
+                        if (check) {
+                            // console.log(`Hiding ${target.title} marker`)
+                            target.hide = true;
+                        } else {
+                            target.hide = false;
+                        }
+                    })
+                }
+            } catch(err) {
+                console.log(`Marker doesn't exist yet`)
             }
         },
         getMarkerOrigin() {
+            // z-index: 1;
             return `
-                z-index: 1;
                 transform-origin: 50% calc(100% - ${(this.marker.type.toLowerCase() == 'city') ? 5 : 3.5}px);
             `
         },
@@ -114,30 +228,72 @@ export default {
             this.hover = true;
             res.hover = true;
             this.app.clickingOnMarker = true;
+            this.checkIfDistance();
+            const self = this;
+            setTimeout(() => {
+                self.checkForCollisionOfAnnoBox();
+            }, 100);
         },
         hoverOffMarker(marker) {
             let res = this.app.mainmap.markers.find(mark => {
                 return mark.title == marker.title
             })
+            this.app.mainmap.resetHovers();
             this.hover = false;
             res.hover = false;
             this.app.clickingOnMarker = false;
+            this.app.mainmap.resetHidden();
+            this.checkIfDistance();
+        },
+        checkIfDistance() {
+            if (this.hover) {
+                // console.log(`${this.marker.title} is Hovered`)
+                let res = this.app.mainmap.markers.find(mark => {
+                    return mark.title == this.marker.title
+                })
+                // console.log(this.app.mainmap.selectedMarker)
+                if ((this.app.mainmap.selectedMarker)
+                    && this.app.mainmap.selectedMarker.title !== this.marker.title) {
+                    this.$refs.anno.calculatingDistance = true;
+                } else {
+                    this.$refs.anno.calculatingDistance = false;
+                    this.app.mainmap.resetAllCalcDistance();
+                }
+                
+
+            } else {
+                // console.log('Reset all distances');
+                // this.app.mainmap.resetAllCalcDistance();
+            }
+
         },
         clickOn() {
             // console.log(this.$el)
             let res = this.app.mainmap.markers.find(mark => {
                 return mark.title == this.marker.title
             })
-
+            // if (this.app.mainmap.selectedMarker) {
+                // }
             res.hover = false;
             res.active = !res.active;
+            if (res.active) {
+                this.app.mainmap.resetActivesExcept(this.marker.dbref);
+                res.active = true;
+            }
+
+            // console.log(this.active)
+            // console.log(this.active)
             this.active = res.active;
             if (res.active) {
                 this.$el.classList.toggle('marker-grow', !this.$el.classList.contains('marker-grow'));
                 this.$el.classList.remove('marker-shrink');
                 this.app.mainmap.panToSelectedMarker();
+                this.active = true;
             } else {
                 this.$el.classList.replace('marker-grow', 'marker-shrink')
+                this.app.mainmap.resetAllCalcDistance();
+                this.checkForCollisionOfAnnoBox();
+                this.active = false;
                 // this.$el.classList.toggle()
             }
 
@@ -214,15 +370,15 @@ export default {
         transform 200ms var(--quart) 20ms,
         z-index 200ms var(--quart) 20ms;
     transform-style: preserve-3D;
-    z-index: 3;
+    z-index: 100;
 }
 .marker-grow {
     transform: scale(1.25);
-    z-index: 20;
+    /* z-index: 20; */
 }
 .marker-shrink {
     transform: scale(1);
-    z-index: 3;
+    /* z-index: 3; */
 }
 
 .marker-title-idle {

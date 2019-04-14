@@ -101,7 +101,7 @@ export default {
         }
     }),
     mounted() {
-        console.log('Hello');
+        // console.log('Hello');
         window.addEventListener('resize', this.checkBreakpoint);
         this.checkBreakpoint();
     },

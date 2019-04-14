@@ -1,45 +1,18 @@
 <template>
-    <v-card min-width="300" v-if="checkingDistance">
-            <v-alert
-                dense
-                :value="hasAlert(marker)"
-                color="info"
-                icon="new_releases"
-                >
-                {{marker.alert}}
-                </v-alert>
-            <v-img
-                class="hidden-sm-and-down"
-                :src="(marker.image) ? marker.image : defImg"
-                height="100px"
-                ></v-img>
-            <v-img
-                :src="(marker.image) ? marker.image : defImg"
-                height="50px"
-                class="hidden-md-and-up"
-                >
-                    
-                    <div :style="getTitleStyle()">
-                        <div class="headline">{{`${marker.title}`}}</div>
-                        <v-icon color="white" class="pl-3">link</v-icon>
-                    </div>
-            </v-img>
+    <v-card min-width="300" v-if="calculatingDistance">
             <v-card-title primary-title class="pt-1 ma-0 pb-2">
-                <div class="hidden-md-and-up">
-                    <div class="mt-2">
-                        <span class="grey--text">{{marker.desc}}</span>
+                    <div class="my-2">
+                        <span class="grey--text">{{distanceAnno}}</span>
                     </div>
-                </div>
-                <div class="hidden-sm-and-down">
-                    <div class="headline">{{`${marker.title}, ${marker.board}`}}</div>
-                    <div class="mt-2">
-                        <span class="grey--text">{{marker.desc}}</span>
-                    </div>
-                </div>
-
+                    <v-layout style="width:100%;">
+                        <v-flex xs12>
+                            <span class="subheading">{{miles}}</span>
+                        </v-flex>
+                        <v-flex xs12>
+                            <span class="subheading">{{kilometers}}</span>
+                        </v-flex>
+                    </v-layout>
             </v-card-title>
-
-
         </v-card>
 </template>
 
@@ -52,14 +25,53 @@ export default {
         active: Boolean,
     },
     computed: {
+        app() {
+            return this.$root.$children[0];
+        },
+        calculatingDistance() {
+            return this.$parent.calculatingDistance;
+        },
         defImg() {
             return this.$parent.defImg;
+        },
+        distanceAnno() {
+            if (this.app.isLoaded) {
+                if (this.app.mainmap.selectedMarker) {
+                    return `Distance from ${this.app.mainmap.selectedMarker.title} to ${this.marker.title} is: `
+                }
+            }
+        },
+        meters() {
+            if (this.app.isLoaded && this.calculatingDistance) {
+                if (this.app.mainmap.selectedMarker)
+                    return this.getDistance(this.app.mainmap.selectedMarker.latlng, this.marker.latlng);
+            }
+        },
+        kilometers() {
+            return (this.meters/1000).toFixed(4) + 'km';
+        },
+        miles() {
+            return (this.meters * 0.000621371192).toFixed(4) + 'mi';
         }
     },
     data: () => ({
-
+        
     }),
     methods: {
+        rad(x) {
+            return x * Math.PI / 180;
+        },
+        getDistance(p1, p2) {
+            var R = 6378137; // Earth’s mean radius in meter
+            var dLat = this.rad(p2.lat() - p1.lat());
+            var dLong = this.rad(p2.lng() - p1.lng());
+            var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(this.rad(p1.lat())) * Math.cos(this.rad(p2.lat())) *
+                Math.sin(dLong / 2) * Math.sin(dLong / 2);
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            var d = R * c;
+            return d; // returns the distance in meter
+        },
         hasAlert() {
             // console.log(this.marker.alert);
             if (this.marker.alert.length) {

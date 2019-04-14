@@ -16,6 +16,7 @@
       </div>
     </div>
     <dialogmarker ref="dialogmarker" />
+    <linkdialog ref="link" />
   </v-app>
 </template>
 
@@ -25,6 +26,7 @@ import drawer from './components/drawer.vue'
 import mainmap from './components/mainmap.vue'
 import loadingicon from './components/loadingicon.vue'
 import dialogmarker from './components/dialogmarker.vue'
+import linkdialog from './components/linkdialog.vue'
 
 export default {
   name: 'App',
@@ -34,6 +36,7 @@ export default {
         drawer,
         mainmap,
         dialogmarker,
+        linkdialog,
     },
   data () {
     return {
@@ -41,6 +44,7 @@ export default {
       mainmap: null,
       isPrepped: false,
       clickingOnMarker: false,
+      permissions: [],
       boards: [
         {
           name: 'Terrenus',
@@ -87,6 +91,14 @@ export default {
       ]
     }
   },
+  computed: {
+    hasPermissions() {
+      if (this.permissions.length)
+        return true;
+      else 
+        return false;
+    }
+  },
   created() {
     // db.collection('users').get()
     // .then(snapshot => {
@@ -114,10 +126,8 @@ export default {
       this.isLoaded = true;
       this.$refs.drawer.init();
       const self = this;
+      // console.log(this.mainmap)
       this.mainmap.doInitAction();
-      setTimeout(() => {
-
-      }, 200);
     },
     checkScroll(evt) {
       console.log(evt);

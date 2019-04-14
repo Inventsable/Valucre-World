@@ -96,7 +96,16 @@ export default {
             { text: '0%' }
         ],
         toggle_exclusive: false,
-        showmarkers: [1, 2, 3]
+        showmarkers: [1, 2, 3],
+        link: {
+            z: '',
+            lat: '',
+            lng: '',
+            hover: '',
+            select: '',
+            board: '',
+        },
+        result: null,
     }),
     computed: {
         app() {
@@ -107,11 +116,17 @@ export default {
                 if (this.app.$refs.drawer.state) {
                     return 'clear';
                 } else {
-                    return 'more_vert';
+                    return 'menu';
                 }
             } else {
-                return 'more_vert';
+                return 'menu';
             }
+        },
+        markers() {
+            return this.app.mainmap.markers;
+        },
+        map() {
+            return this.app.mainmap;
         },
         anno() {
             if (this.app.isLoaded) {
@@ -138,7 +153,7 @@ export default {
                 if (this.app.mainmap.hasMap) {
                     return this.app.mainmap.zoom;
                 // } else {
-                //     return 'more_vert';
+                //     return 'menu';
                 }
             } else {
                 return 0;
@@ -146,8 +161,44 @@ export default {
         }
     },
     methods: {
+        clearLink() {
+            this.link.z = '';
+            this.link.lat = '';
+            this.link.lng = '';
+            this.link.hover = '';
+            this.link.active = '';
+            this.link.board = '';
+        },
         testLink() {
-            console.log(this.app.mainmap.simplePos);
+            // console.log(this.app.mainmap.simplePos);
+            if (/xs|sm/.test(this.$vuetify.breakpoint.name)) {
+                this.map.inMap = false;
+            }
+            this.clearLink();
+            this.link.z = `z${this.map.zoom}`;
+            let hovered = this.markers.find(marker => {
+                return marker.hover;
+            })
+            let active = this.markers.find(marker => {
+                return marker.active;
+            })
+            if ((active) || (hovered)) {
+                console.log('A marker is active or hovered')
+                if (active)
+                    this.link.active = `select=${active.dbref}&`
+                if (hovered)
+                    this.link.hover = `hover=${hovered.dbref}&`
+                this.link.z = (this.map.zoom > 2) ? 'z2to' + this.link.z : this.link.z;
+            } else {
+                console.log('Vanilla')
+                this.link.lat = `lat${this.map.simplePos.lat}`;
+                this.link.lng = `lng${this.map.simplePos.lng}`;
+            }
+            // this.link.lat = this
+            this.result = this.link.z + this.link.lat + this.link.lng + this.link.active + this.link.hover + this.link.board;
+
+            this.app.$refs.link.route = this.result;
+            this.app.$refs.link.state = true;
         },
         getSearchStyle() {
             console.log(this.$vuetify.breakpoint.name);
