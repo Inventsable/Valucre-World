@@ -170,6 +170,7 @@ export default {
             this.$refs.anno.calculatingDistance = false;
         },
         checkForCollision() {
+            // console.log(`Checking ${this.marker.title} for collisions`)
             let rect1 = this.$el.getBoundingClientRect();
             let rect2 = this.app.mainmap.crossElt.getBoundingClientRect();
             let check = !(rect1.right < rect2.left || 
@@ -177,6 +178,7 @@ export default {
                 rect1.bottom < rect2.top || 
                 rect1.top > rect2.bottom)  
             if (check) {
+                // console.log(`${this.marker.title} collides`)
                 this.hover = true;
                 this.marker.hover = true;
             } else {
@@ -186,6 +188,7 @@ export default {
             this.checkIfDistance();
         },
         checkForCollisionOfAnnoBox() {
+            // console.log(`Checking ${this.marker.title} for collisions`)
             try {
 
                 if (this.active || this.hover) {

@@ -556,7 +556,7 @@ export default {
                 self.wasScrolling = true
                 setTimeout(() => {
                     self.wasScrolling = false;
-                }, 500);
+                }, 800);
                 // console.log(simplePos);
 
             });
@@ -620,6 +620,14 @@ export default {
             this.markers.forEach(test => {
                 refList[test.dbref][0].resetScale();
             })
+        },
+        checkHasCollisions(ref) {
+            // setTimeout(() => {
+            //     console.log('Forcing collision check')
+            //     this.checkAnnoBox();
+            // }, 200);
+            // const refList = this.$refs;
+            // refList[ref][0].checkForCollisionOfAnnoBox();
         },
         assignCenter() {
             const self = this;

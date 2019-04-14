@@ -77,16 +77,8 @@ export default {
 /* .v-navigation-drawer {
     margin-top: 48px;
 } */
-.prependMarkerLink {
-    position: absolute;
-    top: 0px;
-    left: 2px;
-}
 
-.markerTitle {
-    font-size: 13px;
-    font-weight: 500;
-}
+
 
 .v-list__tile__sub-title {
   font-size: 12px;

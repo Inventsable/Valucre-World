@@ -1,7 +1,7 @@
 <template>
     <div v-if="hasPermissions()">
         <v-list-group
-            prepend-icon="edit" value="false">
+            prepend-icon="add_location" value="false">
             <template v-slot:activator>
                 <v-list-tile>
                 <v-list-tile-title>New</v-list-tile-title>
