@@ -1,5 +1,12 @@
 <template>
     <v-card min-width="300" v-if="active">
+        <v-system-bar dark status color="primary darken-1">
+            <span>{{marker.title}}</span>
+            <v-spacer></v-spacer>
+            <v-icon dark>network_wifi</v-icon>
+            <v-icon dark>battery_full</v-icon>
+            <v-icon dark>clear</v-icon>
+        </v-system-bar>
         <v-img
             :src="(marker.image) ? marker.image : defImg"
             height="50px"

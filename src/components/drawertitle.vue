@@ -130,7 +130,11 @@ export default {
         }
     },
     methods: {
-
+        getBoardLeader(board) {
+            return this.users.find(item => {
+                return item.board;
+            })
+        },
         goToUserProfile(user) {
             window.open(user.link);
         },

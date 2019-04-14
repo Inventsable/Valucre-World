@@ -273,6 +273,7 @@ export default {
                                     desc: marker.desc,
                                     lat: marker.lat,
                                     lng: marker.lng,
+                                    fmt: marker.fmt,
                                     image: marker.image,
                                     details: marker.details,
                                     hide: false,
@@ -303,6 +304,7 @@ export default {
                                     desc: marker.desc,
                                     lat: marker.lat,
                                     lng: marker.lng,
+                                    fmt: marker.fmt,
                                     image: marker.image,
                                     minZoom: marker.minZoom,
                                     maxZoom: marker.maxZoom,
@@ -698,7 +700,9 @@ export default {
             if (this.$route.params.pathMatch) {
                 console.log(this.$route.params.pathMatch)
                 this.decodeRoute(this.$route.params.pathMatch);
+                // this.findBoardInCurrentView();
             }
+
         },
         decodeStartPos(str) {
             const self = this;
@@ -736,6 +740,7 @@ export default {
                 let result = str.match(rx.board)[0];
                 result = result.replace('board\=', '').replace('\&', '');
                 console.log(`Fit to ${result}`)
+                this.activeBoard = result;
                 let active = this.bounds[result];
                 if (this.mapLoaded) {
                     // console.log(`Setting center to ${active.center}`)

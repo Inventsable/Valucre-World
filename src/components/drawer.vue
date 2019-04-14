@@ -10,7 +10,7 @@
       hide-overlay
     >
       <v-divider></v-divider>
-      <drawertitle />
+      <drawertitle ref="infoTitle" />
       <v-divider></v-divider>
       <v-list dense class="pt-0 mt-0">
         
