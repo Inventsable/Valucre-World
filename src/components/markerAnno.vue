@@ -34,9 +34,12 @@ export default {
     data: () => ({
         defImg: 'https://cdn.vuetifyjs.com/images/cards/sunshine.jpg',
         calculatingDistance: false,
+        hoverElt: null,
     }),
     mounted() {
-        
+        this.hoverElt = this.$el.$children[0];
+        console.log('Anno was booted')
+        console.log(this.hoverElt);
     },
     props: {
         marker: Object,

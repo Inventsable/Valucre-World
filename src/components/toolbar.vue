@@ -214,6 +214,9 @@ export default {
             this.changeStrict();
         },
         openDrawer() {
+            if (/xs|sm/.test(this.$vuetify.breakpoint.name)) {
+                this.map.inMap = false;
+            }
             // this.$parent.$refs.drawer.state = !this.$parent.$refs.drawer.state;
             if (this.app.isLoaded)
                 this.app.$refs.drawer.state = !this.app.$refs.drawer.state;

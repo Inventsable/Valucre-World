@@ -59,42 +59,42 @@ export default {
         users: [
             {
                 name: 'supernal',
-                board: 'Terrenus',
+                boards: ['Terrenus', 'World'],
                 role: 'Board Leader',
                 avatar: 'https://www.valucre.com/uploads/profile/photo-thumb-2.gif',
                 link: 'https://www.valucre.com/profile/2-supernal/'
             },
             {
                 name: 'desolate',
-                board: 'Terrenus',
+                boards: ['Terrenus'],
                 role: 'Board Leader',
                 avatar: 'https://www.valucre.com/uploads/monthly_2016_02/p4vzE5I_png1.thumb_146f68df7d4e920e25020fdf124f268f.ac66dd3bb24290da6172d340c3c33a6b',
                 link: 'https://www.valucre.com/profile/10-desolate/'
             },
             {
                 name: 'King',
-                board: 'Genesaris',
+                boards: ['Genesaris'],
                 role: 'Board Leader',
                 avatar: 'https://www.valucre.com/uploads/monthly_2019_03/drink.thumb.png.e8a0972472908f9f7473f5b2045c4dbe.png',
                 link: 'https://www.valucre.com/profile/305-king/'
             },
             {
                 name: 'Aleksei',
-                board: 'Renovatio',
+                boards: ['Renovatio'],
                 role: 'Board Leader',
                 avatar: 'https://www.valucre.com/uploads/profile/photo-thumb-224.gif',
                 link: 'https://www.valucre.com/profile/224-aleksei/'
             },
             {
                 name: 'Pasion Pasiva',
-                board: 'Orisia',
+                boards: ['Orisia'],
                 role: 'Leader',
                 avatar: 'https://www.valucre.com/uploads/monthly_2018_05/1300835281_Picture14_zps6bcf126b(1).thumb.png.29843fe8f6fa5a3ea546ba6ed3856ec7.png',
                 link: 'https://www.valucre.com/profile/1414-pasion-pasiva/'
             },
             {
                 name: 'paradigm',
-                board: 'Alterion',
+                boards: ['Alterion'],
                 role: 'Leader',
                 avatar: 'https://www.valucre.com/uploads/monthly_2019_02/E21C3C75-AF87-4DF6-BAEE-E8499921DF8A.thumb.jpeg.16381e92f810c4008da58f5275949c05.jpeg',
                 link: 'https://www.valucre.com/profile/153-paradigm/'
@@ -112,7 +112,7 @@ export default {
         },
         activeUsers() {
             return this.users.filter(user => {
-                return user.board == this.activeBoard;
+                return user.boards.includes(this.activeBoard);
             })
         },
         activeBoardDesc() {

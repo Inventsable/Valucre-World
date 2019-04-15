@@ -4,13 +4,13 @@
             class="fmtBlock"
             :style="getBlockStyle(item)">
                 <span class="text-uppercase subheading">{{item.name}}</span>
-                <span style="padding-left: 2px;">{{item.value}}</span>
+                <span style="padding-left: 1.5px;">{{item.value}}</span>
         </div> -->
-        <div v-if="hasContact">
+        <div style="border:1.5px solid rgba(0,0,0,0.12); border-radius: 30px;" v-if="hasContact">
             <v-avatar
                 size="30px"
                 color="grey"
-                style="border: 4px solid grey"
+                
               >
                 <img
                     v-if="marker.contactAvatar"
@@ -24,11 +24,10 @@
                 ></v-icon>
             </v-avatar>
         </div>
-        <div v-else>
+        <div style="border:1.5px solid grey; border-radius: 30px;" v-else>
             <v-avatar
                 size="30px"
                 color="grey"
-                style="border: 4px solid grey"
               >
                 <img
                     v-if="boardLeader().avatar"
@@ -85,11 +84,13 @@ export default {
         boardLeader() {
             if (this.app.isLoaded) {
                 let result = this.app.$refs.drawer.$refs.infoTitle.activeUsers[0];
-                console.log(`Result is:`)
-                console.log(result);
+                // console.log(`Result is:`)
+                // console.log(result);
                 return result;
             } else {
-                return null;
+                return {
+                    avatar: this.app.defaultAvatar
+                }
             }
         },
         getBlockStyle(item) {
@@ -105,7 +106,7 @@ export default {
 
 <style>
 .contactWrapper {
-    /* border: 2px solid red; */
+    /* border: 1.5px solid red; */
     display: flex;
     /* flex-direction: column; */
     justify-content: flex-end;

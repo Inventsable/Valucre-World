@@ -17,6 +17,7 @@
             <v-list class="pa-0">
                 <v-list-group
                     v-for="item in markertypes"
+                    v-show="item.markers.length"
                     :key="item.title"
                     v-model="item.active"
                     no-action
@@ -34,7 +35,7 @@
                         :key="subItem.title"
                         @click="goToMarker(subItem)"
                         >
-                        <div class="prependEdit">
+                        <div class="prependEdit" v-show="hasPermissions()">
                             <v-btn icon 
                                 class="prependEdit"
                                 @click="editMarker(subItem)"
@@ -161,7 +162,11 @@ export default {
                 return 'my_location';
         },
         editMarker(marker) {
-            console.log(`Edit ${marker.title}`)
+            console.log(`Edit ${marker.title}`);
+            this.app.$refs.dialogmarker.inheritMarker(marker);
+            this.app.mainmap.resetActivesExcept(marker.dbref);
+            this.app.$refs.dialogmarker.dialog = true;
+            // marker.active = true;
         },
         hasPermissions() {
             if (this.app.isLoaded) {
@@ -226,6 +231,8 @@ export default {
 }
 
 .typeTitle {
+    color: rgba(0,0,0,0.45);
+    font-weight: 600;
     letter-spacing: .25ch;
 }
 

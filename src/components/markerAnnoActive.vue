@@ -1,11 +1,11 @@
 <template>
     <v-card min-width="300" v-if="active">
-        <v-system-bar dark status color="primary darken-1">
-            <span>{{marker.title}}</span>
+        <v-system-bar dark status color="grey darken-3">
+            <span class="activeTitle">{{marker.title}}</span>
             <v-spacer></v-spacer>
-            <v-icon dark>network_wifi</v-icon>
-            <v-icon dark>battery_full</v-icon>
-            <v-icon dark>clear</v-icon>
+            <v-btn @click="deselect" small icon flat>
+                <v-icon class="pl-1" dark>clear</v-icon>
+            </v-btn>
         </v-system-bar>
         <v-img
             :src="(marker.image) ? marker.image : defImg"
@@ -38,12 +38,18 @@ export default {
     computed: {
         defImg() {
             return this.$parent.defImg;
+        },
+        app() {
+            return this.$root.$children[0];
         }
     },
     data: () => ({
 
     }),
     methods: {
+        deselect() {
+            this.app.mainmap.$refs[this.marker.dbref][0].clickOn();
+        },
         hasAlert() {
             // console.log(this.marker.alert);
             if (this.marker.alert.length) {
@@ -71,6 +77,12 @@ export default {
 </script>
 
 <style>
+
+.activeTitle {
+    font-weight: 500;
+    letter-spacing: .25ch;
+}
+
 .v-alert {
     margin: 0px 0px 0px 0px;
     padding: 4px 16px;

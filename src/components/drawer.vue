@@ -13,10 +13,18 @@
       <drawertitle ref="infoTitle" />
       <v-divider></v-divider>
       <v-list dense class="pt-0 mt-0">
-        
         <drawermarkers ref="drawermarkers" />
         <!-- <v-divider></v-divider> -->
-        <draweractions />
+        <draweractions v-if="notOnMarker" />
+        <v-list v-else>
+            <v-list-tile v-if="hasPermissions()">
+                <v-divider></v-divider>
+                <v-list-tile-action>
+                    <v-icon color="grey">not_interested</v-icon>
+                </v-list-tile-action>
+                    <v-list-tile-title class="greytext">Cannot create on existing marker</v-list-tile-title>
+            </v-list-tile>
+        </v-list>
       </v-list>
     </v-navigation-drawer>
   </div>
@@ -47,7 +55,20 @@ export default {
       if (this.app.isLoaded) {
         return this.app.$refs.dialogmarker.dialog;
       }
-    }
+    },
+    notOnMarker() {
+            let result = true;
+            if (this.app.isLoaded) {
+                if (this.app.mainmap.selectedMarker)
+                    result = false;
+                if (this.app.mainmap.hoveredMarker)
+                    result = false;
+            } else {
+                result = true;
+            }
+            return result;
+        },
+    
   },
   mounted() {
     if (/sm|xs/.test(this.$vuetify.breakpoint.name)) {
@@ -55,8 +76,15 @@ export default {
     } else {
       this.state = true;
     }
+    this.$el.addEventListener('click', this.checkIfMobile)
   },
   methods: {
+    checkIfMobile() {
+      console.log('Checking click against drawer')
+      if (/xs|sm/.test(this.$vuetify.breakpoint.name)) {
+        this.app.mainmap.inMap = false;
+      }
+    },
     init() {
         this.$refs.drawermarkers.init();
     },
@@ -68,6 +96,18 @@ export default {
         width: ${this.state ? "300" : "0"}px;
       `;
     },
+    hasPermissions() {
+        if (this.app.isLoaded) {
+            // console.log('Checking permissions');
+            if (this.app.permissions.includes('World')) {
+                return true;
+            } else if (this.app.permissions.includes(this.app.mainmap.activeBoard)) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    },
     
   }
 };
@@ -78,7 +118,10 @@ export default {
     margin-top: 48px;
 } */
 
+.greytext {
+  color: grey;
 
+}
 
 .v-list__tile__sub-title {
   font-size: 12px;

@@ -58,7 +58,9 @@ export default {
     },
     mounted() {
         this.setUp();
-        this.$on('checkOverlap', this.checkForCollision)
+        this.$on('checkOverlap', this.checkForCollision);
+        console.log(`${this.marker.title} marker was mounted in ${this.marker.type}`);
+        
     },
     destroyed () {
         this.$overlay.setMap(null)

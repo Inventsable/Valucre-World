@@ -4,12 +4,13 @@
             prepend-icon="add_location" value="false">
             <template v-slot:activator>
                 <v-list-tile>
-                <v-list-tile-title>New</v-list-tile-title>
+                    <v-list-tile-title>New</v-list-tile-title>
                 </v-list-tile>
             </template>
             <v-list-tile @click="openMarkerDialog"
                 @mouseenter="addingMarker()"
-                @mouseleave="notAddingMarker()">
+                @mouseleave="notAddingMarker()"
+                >
                 <v-list-tile-action></v-list-tile-action>
                 <v-list-tile-title>
                     <span>Marker</span>
@@ -34,6 +35,7 @@
                 </v-list-tile-action>
             </v-list-tile> -->
         </v-list-group>
+        
     </div>
 </template>
 
@@ -61,12 +63,13 @@ export default {
     computed: {
         app() {
             return this.$root.$children[0];
-        }
+        },
     },
     methods: {
+        
         hasPermissions() {
             if (this.app.isLoaded) {
-                console.log('Checking permissions');
+                // console.log('Checking permissions');
                 if (this.app.permissions.includes('World')) {
                     return true;
                 } else if (this.app.permissions.includes(this.app.mainmap.activeBoard)) {

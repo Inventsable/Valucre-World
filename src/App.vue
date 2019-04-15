@@ -17,6 +17,7 @@
     </div>
     <dialogmarker ref="dialogmarker" />
     <linkdialog ref="link" />
+    <notification ref="note" @done="messageDone()" />
   </v-app>
 </template>
 
@@ -27,6 +28,7 @@ import mainmap from './components/mainmap.vue'
 import loadingicon from './components/loadingicon.vue'
 import dialogmarker from './components/dialogmarker.vue'
 import linkdialog from './components/linkdialog.vue'
+import notification from './components/notification.vue'
 
 export default {
   name: 'App',
@@ -37,10 +39,17 @@ export default {
         mainmap,
         dialogmarker,
         linkdialog,
+        notification,
     },
   data () {
     return {
+      defaultAvatar: 'https://www.valucre.com/uploads/profile/photo-thumb-2.gif',
+      defaultContact: 'https://www.valucre.com/profile/2-supernal/',
       isLoaded: false,
+      notificationText: '',
+      notificationIcon: '',
+      notificationColor: '',
+      hasNotification: false,
       mainmap: null,
       isPrepped: false,
       clickingOnMarker: false,
@@ -110,7 +119,26 @@ export default {
     this.dressStyle();
     this.calcImages();
   },
+  watch: {
+      hasNotification(state) {
+        const self = this;
+          if (state) {
+            console.log('Notification should appear now')
+            this.$refs.note.showNotification();
+            setTimeout(() => {
+              self.messageDone();
+            }, 3000)
+            // this.show = true;
+          }
+      }
+  },
   methods: {
+    messageDone() {
+      this.notificationText = '';
+      this.notificationIcon = 'info';
+      this.notificationColor = 'primary';
+      this.hasNotification = false;
+    },
     findBoardByName(str) {
       return this.boards.find(board => {
         return board.name == str;
@@ -204,7 +232,7 @@ body::-webkit-scrollbar {
 
 .fakescreen {
   position: absolute;
-  z-index: 9999;
+  z-index: 9000;
   width: 100vw;
   height: 100vh;
   background-color: var(--color-bg);

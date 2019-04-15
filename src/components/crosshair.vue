@@ -28,6 +28,9 @@ export default {
                 return 'default';
         }
     },
+    mounted() {
+        // this.app.mainmap.crossElt = this.$el;
+    },
     methods: {
         getStyle() {
             if (this.app.isLoaded) {

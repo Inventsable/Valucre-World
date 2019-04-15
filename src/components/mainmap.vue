@@ -68,6 +68,8 @@ export default {
         inMap: false,
         drawer: false,
         crossElt: null,
+        oldMarkers: [],
+        prevMarkers: [],
         map: null,
         zoom: 2,
         starting: true,
@@ -79,8 +81,8 @@ export default {
         hasMap: false,
         maxZoom: 6,
         minZoom: 0,
-        lat: 20,
-        lng: 125,
+        lat: -10,
+        lng: 0,
         mapType: 'Valucre',
         activeBoard: null,
         hovMarker: null,
@@ -251,6 +253,7 @@ export default {
     },
     created() {
         this.starting = true;
+        const self = this;
         let boards = ['Terrenus', 'Orisia', 'Genesaris', 'Renovatio', 'Alterion']
         boards.forEach(board => {
             let ref = db.collection(board)
@@ -260,43 +263,67 @@ export default {
                         // console.log(change.type)
                         if (/added|modified/i.test(change.type)) {
                             if (/modified/i.test(change.type)) {
-                                let edited = this.markers.find((targ) => {
+                                let edited = self.markers.find((targ) => {
                                     return marker.dbref == targ.dbref;
                                 })
-                                edited = {
-                                    board: marker.board,
-                                    contactLink: marker.contactLink,
-                                    contactAvatar: marker.contactAvatar,
-                                    annoElt: null,
-                                    labelElt: null,
-                                    dbref: marker.dbref,
-                                    desc: marker.desc,
-                                    lat: marker.lat,
-                                    lng: marker.lng,
-                                    fmt: marker.fmt,
-                                    image: marker.image,
-                                    details: marker.details,
-                                    hide: false,
-                                    minZoom: marker.minZoom,
-                                    maxZoom: marker.maxZoom,
-                                    alert: marker.alert,
-                                    latlng: new google.maps.LatLng({
-                                        lat: marker.lat,
-                                        lng: marker.lng,
-                                    }),
-                                    link: marker.link,
-                                    tags: marker.tags,
-                                    title: marker.title,
-                                    // tooltip: marker.tooltip,
-                                    type: marker.type,
-                                    hover: false,
-                                    active: false,
-                                }
-                                console.log(`${marker.title} was edited`)
-                                console.log(edited);
+                                let prevMarkers = self.markers.filter((targ) => {
+                                    return marker.dbref !== targ.dbref;
+                                })
+                                edited.board = marker.board;
+                                edited.contactAvatar = marker.contactAvatar;
+                                edited.contactLink = marker.contactLink;
+                                edited.fmt = marker.fmt;
+                                edited.image = marker.image;
+                                edited.desc = marker.desc;
+                                edited.dbref = marker.dbref;
+                                edited.alerts = marker.alerts;
+                                edited.title = marker.title;
+                                edited.type = marker.type;
+                                edited.tags = marker.tags;
+                                // let receivedContents = {
+                                //     board: marker.board,
+                                //     contactLink: marker.contactLink,
+                                //     contactAvatar: marker.contactAvatar,
+                                //     annoElt: edited.annoElt,
+                                //     labelElt: edited.labelElt,
+                                //     dbref: marker.dbref,
+                                //     desc: marker.desc,
+                                //     lat: marker.lat,
+                                //     lng: marker.lng,
+                                //     fmt: marker.fmt,
+                                //     image: marker.image,
+                                //     // details: marker.details,
+                                //     hide: edited.hide,
+                                //     // minZoom: marker.minZoom,
+                                //     // maxZoom: marker.maxZoom,
+                                //     alerts: marker.alerts,
+                                //     latlng: edited.latlng,
+                                //     link: marker.link,
+                                //     tags: marker.tags,
+                                //     title: marker.title,
+                                //     type: marker.type,
+                                //     hover: false,
+                                //     active: false,
+                                // }
+                                // edited = receivedContents;
+                                // self.markers = prevMarkers;
+                                // prevMarkers.push(receivedContents);
+                                // edited = receivedContents;
+
+                                self.app.notificationText = `${edited.title} was edited`;
+                                self.app.notificationIcon = 'info';
+                                self.app.notificationColor = 'primary';
+                                self.app.hasNotification = true;
+
+                                // self.$refs[receivedContents.dbref].setUp();
+                                // self.oldMarkers = self.markers;
+                                // console.log(edited);
+                                // self.markers = [].concat(prevMarkers, [edited]);
+                                // console.log(self.markers);
+                                // self.markers.push(edited);
                             } else {
 
-                                this.markers.push({
+                                self.markers.push({
                                     board: marker.board,
                                     contactLink: marker.contactLink,
                                     contactAvatar: marker.contactAvatar,
@@ -309,7 +336,7 @@ export default {
                                     minZoom: marker.minZoom,
                                     maxZoom: marker.maxZoom,
                                     details: marker.details,
-                                    alert: marker.alert,
+                                    alerts: marker.alerts,
                                     latlng: new google.maps.LatLng({
                                         lat: marker.lat,
                                         lng: marker.lng,
@@ -327,7 +354,7 @@ export default {
                                 })
                             }
                         } else if (/removed/i.test(change.type)) {
-                            this.markers = this.markers.filter((targ) => {
+                            self.markers = this.markers.filter((targ) => {
                                 return marker.dbref !== targ.dbref;
                             })
                         }
@@ -392,8 +419,8 @@ export default {
                 board.area = new google.maps.LatLngBounds(board.sw, board.ne);
                 board.center = board.area.getCenter();
             })
-            console.log('Bounds have been created')
-            console.log(this.bounds);
+            // console.log('Bounds have been created')
+            // console.log(this.bounds);
         },
         findBoardInCurrentView() {
             // console.log(`lat: ${this.simplePos.lat}, lng: ${this.simplePos.lng}`);
@@ -592,7 +619,7 @@ export default {
             this.markers.forEach(marker => {
                 marker.hide = false;
             })
-            console.log('Unhiding all')
+            // console.log('Unhiding all')
         },
         resetActivesExcept(ref) {
             // console.log(`Reset all except ${ref}`)
@@ -726,7 +753,12 @@ export default {
                                 let unlocked = snapshot.docs[0];
                                 let id = unlocked.id;
                                 self.app.permissions.push(id);
-                                console.log(`Unlocked ${id} permissions`);
+
+                                self.app.notificationText = `Unlocked ${id} permissions`;
+                                self.app.notificationIcon = 'vpn_key';
+                                self.app.notificationColor = 'primary';
+                                self.app.hasNotification = true;
+                                // console.log(``);
                             } else {
                                 console.log('Failed')
                                 self.app.permissions = [];
