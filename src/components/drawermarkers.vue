@@ -170,7 +170,7 @@ export default {
         },
         hasPermissions() {
             if (this.app.isLoaded) {
-                console.log('Checking permissions');
+                // console.log('Checking permissions');
                 if (this.app.permissions.includes('World')) {
                     return true;
                 } else if (this.app.permissions.includes(this.app.mainmap.activeBoard)) {
@@ -182,7 +182,7 @@ export default {
         },
         selectMarker(marker) {
             if (!marker.active) {
-                console.log('Selecting marker');
+                // console.log('Selecting marker');
                 this.app.mainmap.resetActivesExcept(marker.dbref);
                 this.app.mainmap.$refs[marker.dbref][0].clickOn();
             } else {
@@ -193,14 +193,14 @@ export default {
         goToMarker(marker) {
             const self = this;
             // if (marker.active) {
-            console.log(`Travel to ${marker.title}`);
+            // console.log(`Travel to ${marker.title}`);
             if (this.app.mainmap.zoom < marker.minZoom) {
                 this.map.setZoom(+marker.minZoom);
             }
             this.map.panTo(marker.latlng);
             // }
             setTimeout(() => {
-                console.log('Forcing check')
+                // console.log('Forcing check')
                 self.app.mainmap.checkAnnoBox();
             }, 1000);
             // this.app.mainmap.checkHasCollisions(marker.dbref);
@@ -209,7 +209,9 @@ export default {
             this.reShuffleMarkers();
             //
         },
-        
+        resetMarkers() {
+
+        },
         reShuffleMarkers() {
             this.markertypes.forEach(list => {
                 list.markers = this[list.name + 'markers'];

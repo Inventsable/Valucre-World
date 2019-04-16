@@ -16,33 +16,39 @@
         </div>
         <crosshair />
         <div v-if="hasMap" id="mapOverlay">
-            <markercity
-                v-for="marker in landmarkers"
-                :key="marker.dbref"
-                :ref="marker.dbref"
-                v-show="showLands"
-                :marker="marker"
-                :map="map"
-                align="bottom"
-                />
-            <markercity
-                v-for="marker in townmarkers"
-                :key="marker.dbref"
-                :ref="marker.dbref"
-                v-show="showTowns"
-                :marker="marker"
-                :map="map"
-                align="bottom"
-                />
-            <markercity
-                v-for="marker in citymarkers"
-                :key="marker.dbref"
-                :ref="marker.dbref"
-                v-show="marker.selected || showCities"
-                :marker="marker"
-                :map="map"
-                align="bottom"
-                />
+            <!-- <div v-show="!hideLands"> -->
+                <markercity
+                    v-for="marker in landmarkers"
+                    :key="marker.dbref"
+                    :ref="marker.dbref"
+                    v-show="canShowMarker(marker)"
+                    :marker="marker"
+                    :map="map"
+                    align="bottom"
+                    />
+            <!-- </div> -->
+            <!-- <div v-show="!hideTowns"> -->
+                <markercity
+                    v-for="marker in townmarkers"
+                    :key="marker.dbref"
+                    :ref="marker.dbref"
+                    v-show="canShowMarker(marker)"
+                    :marker="marker"
+                    :map="map"
+                    align="bottom"
+                    />
+            <!-- </div> -->
+            <!-- <div v-show="!hideCities"> -->
+                <markercity
+                    v-for="marker in citymarkers"
+                    :key="marker.dbref"
+                    :ref="marker.dbref"
+                    v-show="canShowMarker(marker)"
+                    :marker="marker"
+                    :map="map"
+                    align="bottom"
+                    />
+            <!-- </div> -->
         </div>
         <div id="overlay"></div>
     </div>
@@ -67,6 +73,8 @@ export default {
     data: () => ({
         inMap: false,
         drawer: false,
+        onRails: false,
+        railTick: 0,
         crossElt: null,
         oldMarkers: [],
         prevMarkers: [],
@@ -87,6 +95,7 @@ export default {
         activeBoard: null,
         hovMarker: null,
         selMarker: null,
+        showOnly: null,
         boards: [
             'Terrenus',
             'Orisia',
@@ -98,7 +107,7 @@ export default {
         fitToBoard: false,
         bounds: {
             Terrenus: {
-                north: 60,
+                north: 54,
                 west: 75,
                 east: 180,
                 south: -30,
@@ -166,7 +175,7 @@ export default {
             south: -60,
             west: 30,
         },
-        center: {lat: 20, lng: -125},
+        center: {lat: 0, lng: -10},
         markers: [],
         hideCities: false,
         hideTowns: false,
@@ -197,16 +206,20 @@ export default {
             return mirror;
         },
         showCities() {
-            if (/xs|sm/.test(this.$vuetify.breakpoint.name)) {
-                if (this.zoom >= 2)
-                    return this.app.$refs.toolbar.showmarkers.includes(1);
-                else
-                    return false;
+            if (!this.hideCities) {
+                // if (/xs|sm/.test(this.$vuetify.breakpoint.name)) {
+                //     if (this.zoom >= 2)
+                //         return this.app.$refs.toolbar.showmarkers.includes(1);
+                //     else
+                //         return false;
+                // } else {
+                    if (this.zoom > 2)
+                        return this.app.$refs.toolbar.showmarkers.includes(1);
+                    else
+                        return false;
+                // }
             } else {
-                if (this.zoom > 2)
-                    return this.app.$refs.toolbar.showmarkers.includes(1);
-                else
-                    return false;
+                return false;
             }
         },
         citymarkers() {
@@ -215,16 +228,22 @@ export default {
             })
         },
         showTowns() {
-            if (/xs|sm/.test(this.$vuetify.breakpoint.name)) {
-                if (this.zoom >= 3)
-                    return this.app.$refs.toolbar.showmarkers.includes(2);
-                else
-                    return false;
+            if (!this.hideTowns) {
+                // console.log('Towns are not hidden')
+                // if (/xs|sm/.test(this.$vuetify.breakpoint.name)) {
+                //     if (this.zoom >= 3)
+                //         return this.app.$refs.toolbar.showmarkers.includes(2);
+                //     else
+                //         return false;
+                // } else {
+                    if (this.zoom > 3)
+                        return this.app.$refs.toolbar.showmarkers.includes(2);
+                    else
+                        return false;
+                // }
             } else {
-                if (this.zoom > 3)
-                    return this.app.$refs.toolbar.showmarkers.includes(2);
-                else
-                    return false;
+                // console.log('Towns should be hidden')
+                return false;
             }
         },
         townmarkers() {
@@ -233,16 +252,20 @@ export default {
             })
         },
         showLands() {
-            if (/xs|sm/.test(this.$vuetify.breakpoint.name)) {
-                if (this.zoom >= 3)
-                    return this.app.$refs.toolbar.showmarkers.includes(3);
-                else
-                    return false;
+            if (!this.hideLands) {
+                // if (/xs|sm/.test(this.$vuetify.breakpoint.name)) {
+                //     if (this.zoom >= 3)
+                //         return this.app.$refs.toolbar.showmarkers.includes(3);
+                //     else
+                //         return false;
+                // } else {
+                    if (this.zoom > 3)
+                        return this.app.$refs.toolbar.showmarkers.includes(3);
+                    else
+                        return false;
+                // }
             } else {
-                if (this.zoom > 3)
-                    return this.app.$refs.toolbar.showmarkers.includes(3);
-                else
-                    return false;
+                return false;
             }
         },
         landmarkers() {
@@ -280,6 +303,7 @@ export default {
                                 edited.title = marker.title;
                                 edited.type = marker.type;
                                 edited.tags = marker.tags;
+                                edited.ports = marker.ports;
                                 // let receivedContents = {
                                 //     board: marker.board,
                                 //     contactLink: marker.contactLink,
@@ -329,6 +353,7 @@ export default {
                                     contactAvatar: marker.contactAvatar,
                                     dbref: marker.dbref,
                                     desc: marker.desc,
+                                    ports: marker.ports,
                                     lat: marker.lat,
                                     lng: marker.lng,
                                     fmt: marker.fmt,
@@ -369,7 +394,7 @@ export default {
             // console.log(this.markers)
             // console.log('Checking route')
             if (this.$route.params.pathMatch)
-                console.log('Decode now')
+                // console.log('Decode now')
                 this.decodeStartPos(this.$route.params.pathMatch);
         }, 1600);
     },
@@ -384,6 +409,51 @@ export default {
         this.$el.addEventListener('touchstart', this.handleTouch)
     },
     methods: {
+        canShowMarker(marker) {
+            if (this.app.showOnly.length) {
+                if (this.app.showOnly == marker.dbref) {
+                    console.log(`${this.app.showOnly} == ${marker.dbref} PASS`)
+                    return true;
+                } else {
+                    console.log(`${this.app.showOnly} !== ${marker.dbref} FAIL`)
+                    return false;
+                }
+            }
+            if (/cit/i.test(marker.type)) {
+                if (!this.hideCities) {
+                    if (this.showCities) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            } else if (/town/i.test(marker.type)) {
+                if (!this.hideTowns) {
+                    if (this.showTowns) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            } else if (/land/i.test(marker.type)) {
+                if (!this.hideLands) {
+                    if (this.showLands) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            }
+        },
+        shouldHideMarker() {
+
+        },
         handleTouch(evt) {
             this.inMap = true;
             // console.log('Touching')
@@ -597,6 +667,16 @@ export default {
             });
             
             google.maps.event.addListener(this.map, 'idle', function() {
+                if (self.onRails) {
+                    setTimeout(() => {
+                        self.railTick++;
+                        if (self.railTick == 2) {
+                            console.log('Recheck annobox for loading zoom location')
+                            self.checkAnnoBox();
+                            self.onRails = false;
+                        }
+                    }, 200);
+                }
                 self.assignCenter();
                 self.checkAnnoBox();
                 
@@ -725,7 +805,7 @@ export default {
                 refList[mark.dbref][0].assignAnnoElt();
             })
             if (this.$route.params.pathMatch) {
-                console.log(this.$route.params.pathMatch)
+                // console.log(this.$route.params.pathMatch)
                 this.decodeRoute(this.$route.params.pathMatch);
                 // this.findBoardInCurrentView();
             }
@@ -740,11 +820,13 @@ export default {
                 z: /z[\d](toz[\d])?/,
                 lat: /lat[^a-zA-Z]*/,
                 lng: /lng[^a-zA-Z]*/,
-                key: /key\=[^&]*&/,
+                key: /key\=[^&]*/,
+                hide: /hide\=[\d]{3}\&/,
+                show: /show\=[^&]*\&/,
             };
             if (rx.key.test(str)) {
                 let result = str.match(rx.key)[0];
-                result = result.replace('key\=', '').replace('\&', '');
+                result = result.replace('key\=', '');
                 // console.log(`Trying to unlock with ${result}`);
                 db.collection('keys').where('key', '==', result).get()
                     .then(snapshot => {
@@ -766,7 +848,55 @@ export default {
                     })
 
             }
+            if (rx.show.test(str)) {
+                this.hideCities = true;
+                this.hideTowns = true;
+                this.hideLands = true;
+
+                let result = str.match(rx.show)[0];
+                result = result.replace('show\=', '').replace('\&', '');
+                this.app.$refs.toolbar.showmarkers = [];
+                this.showOnly = result.trim();
+                this.app.showOnly = result.trim();
+                console.log(`Show only ${result}`)
+                console.log(result)
+            } else {
+                if (rx.hide.test(str)) {
+                    let result = str.match(rx.hide)[0];
+                    result = result.replace('hide\=', '').replace('\&', '');
+                    // result = result.split(/\d/);
+                    // console.log(`Found metrics to hide`)
+                    // console.log(result)
+                    let hides = [
+                        +result[0],
+                        +result[1],
+                        +result[2]
+                    ]
+                    let typeList = [
+                        'None',
+                        'Cities',
+                        'Towns',
+                        'Lands',
+                    ]
+                    console.log(hides);
+                    let count = 0;
+                    let mirror = [];
+    
+                    hides.forEach(res => {
+                        count++;
+                        let targ = typeList[count];
+                        if (res > 0) {
+                            mirror.push(count);
+                        } else {
+                            // console.log(`this.${'hide' + targ} = true;`)
+                            self['hide' + targ] = true;
+                        }
+                    })
+                    this.app.$refs.toolbar.showmarkers = mirror;
+                }
+            }
             if (rx.board.test(str)) {
+                this.onRails = true;
                 // console.log('Fit to board');
                 this.fitToBoard = true;
                 let result = str.match(rx.board)[0];
@@ -782,6 +912,7 @@ export default {
                 }
             } else {
                 if ((rx.lat.test(str)) && (rx.lng.test(str))) {
+                    this.onRails = true;
                     if ((!rx.hover.test(str)) && (!rx.hover.test(str))) {
                         let resultLat = str.match(rx.lat)[0];
                         let resultLng = str.match(rx.lng)[0];
@@ -795,6 +926,7 @@ export default {
                     }
                 }
                 if (rx.z.test(str)) {
+                    this.onRails = true;
                     let result = str.match(rx.z)[0];
                     if (/to/i.test(result)) {
                         result = result.split('to');
@@ -807,6 +939,7 @@ export default {
                     // console.log(`Changed zoom to ${result}`)
                 }
                 if (rx.select.test(str)) {
+                    this.onRails = true;
                     let result = str.match(rx.select)[0];
                     result = result.replace('select\=', '').replace('\&', '');
                     // console.log('Change select');
@@ -837,6 +970,7 @@ export default {
                     }
                 }
                 if (rx.hover.test(str)) {
+                    this.onRails = true;
                     let result = str.match(rx.hover)[0];
                     result = result.replace('hover\=', '').replace('\&', '');
                     let temp = this.markers.find(marker => {
@@ -893,6 +1027,8 @@ export default {
                                         // console.log(`Start on ${self.selectedMarker.title}`)
                                         if (rx.hover.test(str)) {
                                             self.map.panTo(this.hovMarker.latlng);
+                                            console.log('Prepping for zoom')
+                                            
                                         }
                                     }
                                     self.setZoom(+results[1].replace('z', ''))
@@ -904,6 +1040,10 @@ export default {
                     }
                 })
             }
+            // setTimeout(() => {
+            //     console.log('Check annobox')
+            //     self.checkAnnoBox();
+            // }, 2000);
 
         },
         isOdd(num) {

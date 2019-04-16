@@ -49,6 +49,7 @@ export default {
       notificationText: '',
       notificationIcon: '',
       notificationColor: '',
+      showOnly: '',
       hasNotification: false,
       mainmap: null,
       isPrepped: false,

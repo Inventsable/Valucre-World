@@ -82,25 +82,13 @@
 export default {
     name: 'toolbar',
     data: () => ({
-        dropdown_font: [
-            { text: 'Arial' },
-            { text: 'Calibri' },
-            { text: 'Courier' },
-            { text: 'Verdana' }
-        ],
-        dropdown_edit: [
-            { text: '100%' },
-            { text: '75%' },
-            { text: '50%' },
-            { text: '25%' },
-            { text: '0%' }
-        ],
         toggle_exclusive: false,
         showmarkers: [1, 2, 3],
         link: {
             z: '',
             lat: '',
             lng: '',
+            hide: '',
             hover: '',
             select: '',
             board: '',
@@ -160,6 +148,33 @@ export default {
             }
         }
     },
+    watch: {
+        showmarkers(state) {
+            if (this.app.isLoaded) {
+                if (this.app.showOnly)
+                    this.app.showOnly = '';
+                if (!state.includes(1)) {
+                    // console.log('Master hide cities')
+                    this.app.mainmap.hideCities = true;
+                } else {
+                    this.app.mainmap.hideCities = false;
+                }
+                if (!state.includes(2)) {
+                    // console.log('Master hide towns');
+                    this.app.mainmap.hideTowns = true;
+                } else {
+                    this.app.mainmap.hideTowns = false;
+                }
+                if (!state.includes(3)) {
+                    this.app.mainmap.hideLands = true;
+                    // console.log('Master hide lands')
+                } else {
+                    this.app.mainmap.hideLands = false;
+                }
+            }
+
+        }
+    },
     methods: {
         clearLink() {
             this.link.z = '';
@@ -168,6 +183,7 @@ export default {
             this.link.hover = '';
             this.link.active = '';
             this.link.board = '';
+            this.link.hide = '';
         },
         testLink() {
             // console.log(this.app.mainmap.simplePos);
@@ -182,6 +198,16 @@ export default {
             let active = this.markers.find(marker => {
                 return marker.active;
             })
+
+            if (this.showmarkers.length < 3) {
+                let resarray = [
+                    (this.app.mainmap.hideCities) ? 0 : 1,
+                    (this.app.mainmap.hideTowns) ? 0 : 1,
+                    (this.app.mainmap.hideLands) ? 0 : 1,
+                ]
+                this.link.hide = `hide\=${resarray.join('')}\&`
+            }
+
             if ((active) || (hovered)) {
                 console.log('A marker is active or hovered')
                 if (active)
@@ -195,7 +221,7 @@ export default {
                 this.link.lng = `lng${this.map.simplePos.lng}`;
             }
             // this.link.lat = this
-            this.result = this.link.z + this.link.lat + this.link.lng + this.link.active + this.link.hover + this.link.board;
+            this.result = this.link.z + this.link.lat + this.link.lng + this.link.hide + this.link.active + this.link.hover + this.link.board;
 
             this.app.$refs.link.route = this.result;
             this.app.$refs.link.state = true;

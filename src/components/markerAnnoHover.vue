@@ -24,11 +24,13 @@
                     
                     <div :style="getTitleStyle()">
                         <div class="headline pr-2">{{`${marker.title}`}}</div>
-                        <contactlist :marker="marker" />
-                        <!-- <v-icon color="white" class="pl-3">link</v-icon> -->
+                        <contactlist :marker="marker" />    
+                        <div v-if="hasPort(marker)" v-show="hasPortIcon()" class="portWrap" style="justify-content:center;">
+                            <v-icon style="color: rgba(255,255,255,0.875)" class="pl-1">{{portIcon(marker)}}</v-icon>
+                        </div>
                     </div>
             </v-img>
-            <v-card-title primary-title class="pt-1 ma-0 pb-2">
+            <v-card-title primary-title class="pt-2 ma-0 pb-2">
                 <div class="hidden-md-and-up">
                     <div class="mt-2 ">
                         <span class="grey--text">{{marker.desc}}</span>
@@ -46,16 +48,22 @@
                         <span class="grey--text">{{marker.desc}}</span>
                     </div>
                 </div>
-                <!-- <div class="hidden-sm-only"> -->
-                    <div class="pt-2" style="width: 100%;">
+                <div class="hidden-sm-only" v-show="ifNotSE()">
+
+                    <div class="pt-2" style="width: 100%; display: flex; flex-wrap: nowrap;">
                         <v-chip small v-for="tag in convertedTags" :key="tag.name">
                             <!-- <v-icon small left>label</v-icon> -->
                             <span class="tagItem">
                                 {{tag.label}}
                             </span>
                         </v-chip>
+                        <div v-if="hasPort(marker)" class="portWrap">
+                            <v-icon color="grey lighten-1" class="pl-1">{{portIcon(marker)}}</v-icon>
+                            <span class="text-uppercase portAnno">{{marker.ports[0] + 'port'}}</span>
+                        </div>
+
                     </div>
-                <!-- </div> -->
+                </div>
             </v-card-title>
 
 
@@ -121,6 +129,40 @@ export default {
         // this.$el.addEventListener('click', this.checkIfMobile)
     },
     methods: {
+        hasPortIcon() {
+            if (this.$vuetify.breakpoint.name == 'sm') {
+                return true;
+            } else if (document.body.clientWidth == 568) {
+                return true;
+            } else {
+                return false;
+            }
+        },
+        portIcon(marker) {
+            if (marker.ports.includes('sea'))
+                return 'directions_boat';
+            else if (marker.ports.includes('sky'))
+                return 'flight';
+        },
+        hasPort(marker) {
+            if (marker.ports) {
+                if (marker.ports.length) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        },
+        ifNotSE() {
+            if (document.body.clientWidth !== 568)
+                return true;
+            else 
+                return false;
+            // console.log();
+
+        },
         getAlert(marker) {
             if (marker.alerts.length) {
                 console.log('This marker has an alert')
@@ -146,6 +188,7 @@ export default {
             return `
                 width: 100%;
                 height: 100%;
+                
                 display: flex;
                 justify-content: flex-end;
                 align-items: center;
@@ -164,6 +207,19 @@ export default {
     display: flex;
     justify-content: flex-start;
     align-items: center;
+}
+.portWrap {
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   flex-wrap: wrap; 
+}
+
+.portAnno {
+    margin-top: 4px;
+    font-size: 7px;
+    letter-spacing: .25ch;
+    color: grey;
 }
 
 .tagItem {

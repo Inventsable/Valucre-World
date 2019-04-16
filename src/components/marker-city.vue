@@ -59,8 +59,8 @@ export default {
     mounted() {
         this.setUp();
         this.$on('checkOverlap', this.checkForCollision);
-        console.log(`${this.marker.title} marker was mounted in ${this.marker.type}`);
-        
+        // console.log(`${this.marker.title} marker was mounted in ${this.marker.type}`);
+
     },
     destroyed () {
         this.$overlay.setMap(null)
@@ -96,13 +96,39 @@ export default {
     methods: {
         checkStatus() {
             let result = false;
+            // console.log(`${this.app.showOnly} ?== ${this.marker.dbref}`)
+            if (this.app.showOnly.length) {
+                if (this.app.showOnly == this.marker.dbref) {
+                    // console.log(true)
+                    return true;
+                } else {
+                    // console.log(false)
+                    return false;
+                }
+            }
+            if (this.marker.type == 'City') {
+                if (this.app.mainmap.hideCities) {
+                    // console.log(`City display override for ${this.marker.dbref}`)
+                    return false;
+                }
+            } else if (this.marker.type == 'Town') {
+                if (this.app.mainmap.hideTowns) {
+                    // console.log('Town display override')
+                    return false;
+                }
+            } else if (this.marker.type == 'Land') {
+                if (this.app.mainmap.hideLands) {
+                    // console.log('Land display override')
+                    return false;
+                }
+            }
             if (this.marker.active) {
                 // console.log(`${this.marker.title} passes from selection`)
                 return true;
             } else {
                 if (this.app.mainmap.zoom < +this.marker.minZoom) {
                     if (/xs|sm/.test(this.$vuetify.breakpoint.name)) {
-                        if (this.app.mainmap.zoom >= +this.marker.minZoom - 1) {
+                        if (this.app.mainmap.zoom >= +this.marker.minZoom) {
                             if (this.marker.hide) {
                                 // console.log(`${this.marker.title} failed because hidden`);
                             } else {
@@ -181,6 +207,7 @@ export default {
                 rect1.top > rect2.bottom)  
             if (check) {
                 // console.log(`${this.marker.title} collides`)
+                this.app.mainmap.resetHovers();
                 this.hover = true;
                 this.marker.hover = true;
             } else {
